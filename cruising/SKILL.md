@@ -1,49 +1,84 @@
 ---
 name: cruising
-description: Pre-flight error-prevention checklist. Use before launching or resuming an implementation agent, committing a phase of work, or opening a PR — verifies working-tree state, delegation prompt completeness, environment survival, architecture fit, hard-question interrogation, TDD evidence, documented contracts, production blast radius, deploy-order hazards, exit gates, and operational notes.
+description: Repeating FORDEC control cycle for implementation work. Use before launching or resuming an agent, committing a phase, or opening or updating a PR to establish Facts, compare Options, assess Risks and Benefits, make a Decision, Execute it with TDD and operational discipline, and Check results, drift, and monitoring.
 ---
 
-# Cruising — Pre-Flight Checklist
+# Cruising — Repeating FORDEC Control Cycle
 
-Purpose: catch the errors that historically cost retries — stale uncommitted agent output, non-self-contained delegations, host sleep killing long runs, missing RED-phase tests, violated documented invariants, infra-before-code deploy hazards, and incomplete PR operational notes — and force the questions that are easy to skip: does this fit the architecture, what breaks in production if it's wrong, and which uncomfortable assumption invalidates the design.
+Purpose: prevent implementation momentum from turning assumptions into facts. Run the aviation-derived **FORDEC** sequence at every meaningful boundary:
+
+1. **Facts**
+2. **Options**
+3. **Risks & Benefits**
+4. **Decision**
+5. **Execution**
+6. **Check**
 
 ## Workflow position
 
-**2 of 3 — run during implementation.** Use after `before-startup` has cleared the initial branch and baseline. Re-run the applicable LAUNCH, COMMIT, or PR sections at each phase boundary. Hand off to `landing` only when the final PR is ready to merge, release, or deploy.
+**2 of 3 — repeat during implementation.** Use after `before-startup` has cleared the initial departure. Run a complete cycle at each **LAUNCH**, **COMMIT**, and **PR** boundary. Hand off to `landing` only after the PR cycle is checked and the completed change is ready for its final production decision.
 
 ## How to run
 
-Determine which stage(s) apply right now: **LAUNCH** (starting or resuming an agent or phase), **COMMIT** (closing a phase), **PR** (opening or updating a PR). Evaluate every item in the applicable sections against real evidence (command output, file paths, quoted docs) — never from memory. Then produce the report in the format below.
+First name the boundary:
 
-## LAUNCH — before starting or resuming any agent or phase
+- **LAUNCH** — starting or resuming an agent or implementation phase;
+- **COMMIT** — closing a phase or preparing a commit;
+- **PR** — opening or updating a pull request.
 
-1. **Working-tree audit** — run `git status`; identify every uncommitted file. Is any of it partial output from a previous or killed agent run? The launch plan must explicitly reuse it or discard it — never leave it ambient for the next agent to trip over.
-2. **Self-contained delegation** — the agent prompt must carry the goal, exact file paths, the binding plan/design-doc substance (not just a pointer), constraints, and relevant session decisions. Subagents see none of the conversation.
-3. **Environment survival** — will the machine stay awake and connected for the run's duration? Lid-close/clamshell sleep kills long runs, and `caffeinate` does NOT prevent lid-close sleep. Also check spend-cap/quota headroom for long runs.
-4. **Identity over liveness** — when resuming or coordinating with another session/agent, verify identity directly (direct ping, file mtimes). "A process exists and is busy" is not proof it is the one you think it is.
-5. **Architecture fit** — state where the change sits in the existing architecture (layer, module boundary, dependency direction) and confirm it follows established patterns, citing the pattern it follows. Any new pattern, dependency, or boundary crossing must be named and justified against the existing alternative. One-way-door decisions (schema shapes, public API contracts, event/message formats, data written in a new form) require explicit user sign-off before implementation starts.
-6. **Hard questions surfaced** — enumerate the uncomfortable questions the plan glosses over: what happens under failure, retry, concurrency, partial deploy, empty or hostile input, and 10x scale; which single assumption, if wrong, invalidates the design. Answer each with evidence or record it as an explicit open risk with an owner. "No hard questions found" is itself a FAIL.
+Then run F → O → R → D → E → C in order for that boundary. Use command output, file paths, quoted contracts, and observed behavior. Do not choose an option before comparing risks and benefits. New material facts during Execution invalidate the decision and restart the cycle at Facts.
 
-## COMMIT — before committing a phase
+## F — FACTS
 
-7. **RED evidence** — for each new behavior, show the failing test that existed before the implementation (test-run log or commit history). "Tests are green now" is not evidence.
-8. **Contract check** — list the documented invariants covering the touched areas (project CLAUDE.md, feature KNOWLEDGE.md files, decisions/pitfalls ledger) and confirm each is honored, citing the source.
-9. **Scope guard** — the diff stays inside the ticket boundary. Name anything that belongs to a deferred or adjacent ticket, and remove it.
-10. **Validation with output** — build, typecheck, lint, and tests actually ran; report real results, not assumptions. Delegate to a Validate agent where available.
-11. **Exit gates** — enumerate the plan's exit criteria for this phase and confirm each against the diff.
-12. **Architecture drift check** — compare what was actually built against the architecture stated at LAUNCH (item 5). Name any deviation — a new dependency, a boundary crossed, a pattern bypassed "temporarily" — and either revert it or get it re-approved; silent drift is a FAIL.
-13. **Lesson encoded** — if this phase had failed attempts, the root cause is recorded somewhere durable (pitfall entry, prompt template, working memory), not merely fixed.
+1. **Boundary and working tree** — identify LAUNCH, COMMIT, or PR; run `git status`; account for every uncommitted file and any partial output from a previous or killed agent. Never treat ambient changes as belonging to the current task.
+2. **Architecture and contracts** — state the layer, module boundary, dependency direction, established pattern, documented invariants, and one-way-door contracts affected by the work. Cite their sources.
+3. **Scope and delta** — compare the actual diff and commits with the ticket, plan, and current phase exit criteria. Name adjacent or deferred work that has entered the diff.
+4. **Agent and environment state** — for LAUNCH, verify the delegation contains the goal, exact paths, binding plan substance, constraints, and session decisions; verify agent identity directly when resuming; confirm the machine, connection, services, and quota can survive the run.
+5. **Quality evidence** — for COMMIT or PR, show RED evidence for each new behavior, current build/typecheck/lint/test output, end-to-end observations, failed attempts, and unresolved risks. Green tests alone do not prove the RED phase occurred.
+6. **Operational state** — for PR, identify production surfaces, live-data and client compatibility, indexes, TTLs, rules, variables, secrets, scheduled work, migrations, manual steps, and repository deployment constraints.
 
-## PR — before opening or updating a PR
+## O — OPTIONS
 
-14. **Production blast radius** — state concretely what breaks in production if this change misbehaves: which user-facing surfaces, scheduled jobs, and data are affected; whether the change is backward compatible with live data and in-flight clients; whether it degrades or hard-fails. "Low risk" without a stated mechanism is not evidence.
-15. **Rollback path** — is a plain revert safe, or does the change write data / emit events in a format old code can't read? Name the rollback mechanism (revert, feature flag, config toggle) and any point of no return. If there is no rollback path, that must be stated in the PR and acknowledged by the user.
-16. **Infra-before-code ordering** — does the change add or rely on a database index, TTL policy, env var, secret, or migration? State what happens if the code ships before the infra is ready, and the graceful-degradation path.
-17. **Operational notes complete** — explicit yes/no for each category (indexes, TTLs, env vars/secrets, scheduled functions, migrations, manual post-deploy steps with exact commands) — even when the answer is "none".
-18. **Deploy sequence stated** — the exact deploy order and modes, honoring repo deploy rules (e.g. never `auto` after a single-surface run; index → poll Enabled → hosting).
-19. **Notifications** — if anything qualifies as a migration or ops action, the required people are notified per project policy, with exact commands drafted in the PR's Operational notes.
-20. **Open risks restated** — any hard question left as an open risk at LAUNCH (item 6) appears in the PR description with its current status: resolved with evidence, mitigated, or still open and accepted by whom.
+7. **Viable courses** — list the realistic choices for this boundary:
+    - LAUNCH: proceed with the planned approach, choose an established alternative, reduce or split scope, obtain a missing decision, or hold;
+    - COMMIT: commit as one unit, split the change, remove drift, add missing evidence, revise the design, or hold;
+    - PR: open or update now, reduce scope, stage behind a control, complete operational prerequisites, or hold.
+8. **Fallback course** — include the safest recovery or no-go option. Do not present a destructive action, silent scope increase, or unapproved one-way-door decision as routine execution.
+
+## R — RISKS & BENEFITS
+
+9. **Engineering tradeoffs** — for every option, compare correctness, architectural fit, simplicity, reviewability, delivery speed, reversibility, dependency cost, and maintenance burden. Name the concrete present-day benefit; speculative flexibility does not count.
+10. **Failure interrogation** — evaluate failure, retry, duplicate delivery, concurrency, partial execution, empty or hostile input, cancellation, 10× scale, and the single assumption that would invalidate the option.
+11. **Production exposure** — for PR, compare blast radius, degradation mode, rollback safety, live-data compatibility, infrastructure-before-code hazards, notification needs, and the observability available if the option fails.
+
+## D — DECISION
+
+12. **Explicit course** — select one option before acting. State the rationale, in-scope result, deferred work, exit criteria, accepted risks and owners, rollback or recovery course, and evidence that will prove success.
+13. **Approval gate** — obtain explicit user approval for schema shapes, public APIs, event formats, irreversible data writes, new production dependencies, destructive actions, or any option with no safe rollback. Without approval, the decision is **HOLD**.
+
+## E — EXECUTION
+
+14. **LAUNCH execution** — send a self-contained delegation, preserve existing user work, ensure the environment will remain available, and implement through RED → GREEN → REFACTOR using the selected architecture.
+15. **COMMIT execution** — remove out-of-scope work, satisfy the phase exit criteria, run the repository's targeted validation, encode lessons from failed attempts, and prepare the smallest coherent commit. Do not commit unless the user requested it.
+16. **PR execution** — prepare the exact deployment sequence and complete operational notes with explicit yes/no entries for indexes, TTLs, variables/secrets, scheduled functions, migrations, notifications, and manual commands. Do not open or update a PR unless the user requested it.
+
+## C — CHECK
+
+17. **Decision conformance** — compare the result with the selected option, architecture, scope, contracts, and exit criteria. Name every deviation; revert it or reopen FORDEC rather than accepting silent drift.
+18. **Observed verification** — report the actual build, typecheck, lint, test, and end-to-end outputs applicable to the boundary. Confirm every new behavior and every reachable failure path has evidence.
+19. **Risk and lesson closure** — restate each open risk with its current status and owner. Record the root cause of failed attempts in the repository's durable learning mechanism where one exists.
+20. **Monitoring trigger** — define the signal, observation window, threshold, and owner that will reveal failure after this boundary. State the condition that reopens the cycle or causes a rollback, pause, or go-around.
 
 ## Report format
 
-Output a table: `# | item | PASS/FAIL/N-A | one-line evidence`. Follow with a verdict line: **CLEAR TO PROCEED** or **BLOCKED: <failing items>**. A FAIL is a hard stop — never proceed past one silently; fix it or escalate to the user.
+Output:
+
+1. `Boundary: LAUNCH | COMMIT | PR`;
+2. a `Stage | # | item | PASS/FAIL/N-A | evidence` table;
+3. an **Options** list with one-line Risks and Benefits for each;
+4. a **Decision** line with rationale, owner, exit criteria, and accepted risks;
+5. an **Execution** line with actions actually completed;
+6. a **Check** line with observed results and the monitoring trigger;
+7. the verdict **CLEAR TO PROCEED** or **HOLD: <failing items or reopen conditions>**.
+
+A FAIL is a hard stop. Fix it, select another option, or escalate it; never proceed silently.

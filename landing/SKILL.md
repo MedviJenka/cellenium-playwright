@@ -1,47 +1,74 @@
 ---
 name: landing
-description: Pre-production landing checklist. Use before merging to the integration branch, cutting a release, or deploying to production — asks the honest questions that are easy to skip at the end: is this actually ready for production, where would a latent bug hide (never-executed paths, swallowed errors, races, the test we avoided writing), and did we keep it simple rather than over-engineered (speculative abstractions, one-caller indirection, unjustified new dependencies, residue).
+description: Final FORDEC production-readiness cycle. Use before final PR approval, merge, release, or production deployment to establish Facts, compare land and go-around Options, assess Risks and Benefits, make an explicit Decision, define or perform the authorized Execution, and Check production signals with rollback triggers.
 ---
 
-# Landing — Production Readiness Checklist
+# Landing — Final FORDEC Production Decision
 
-Purpose: the last honest look before the work touches production. By this point everything is green and the temptation is to declare victory — this checklist exists to force the three questions that green checks do not answer: **are we actually ready** (not "do the tests pass" but "do we know what breaks, how we'd find out, and how we'd back out"), **where would a bug hide** (the code paths nothing has ever executed, the errors that vanish silently, the test that was avoided), and **did we ship the simplest thing that works** (or did we build abstractions, options, and layers for a future that may never come).
+Purpose: make the last pre-production decision with the discipline of the aviation **FORDEC** model:
+
+1. **Facts**
+2. **Options**
+3. **Risks & Benefits**
+4. **Decision**
+5. **Execution**
+6. **Check**
+
+Green checks are inputs, not the decision. The final cycle must expose the weakest evidence, compare landing with a go-around, state who accepts residual risk, and define how production will be monitored.
 
 ## Workflow position
 
-**3 of 3 — run last.** Use after `before-startup` and the applicable `cruising` gates have passed, when the completed change is awaiting final approval, merge, release, or production deployment. This is the terminal production-readiness gate, not an implementation-phase checklist.
+**3 of 3 — run last.** Use after `before-startup` and the applicable `cruising` cycles have passed, when the completed change awaits final approval, merge, release, or deployment. This is the terminal production-readiness cycle.
 
 ## How to run
 
-Run this before: final PR approval / merge into the integration branch, cutting a release, or any production deploy. Evaluate every item against real evidence — command output, the actual final diff, quoted docs, observed behavior — never from memory or optimism. Honesty is the point: an evasive answer ("should be fine", "low risk", "probably covered") is a FAIL for that item. Then produce the report in the format below.
+Run F → O → R → D → E → C in order against the final branch state. Evidence must come from the actual final diff, branch-tip validation, observed end-to-end behavior, repository rules, and deploy configuration. Do not merge, release, or deploy unless the user has authorized that action. If new facts appear during Execution or Check, stop and restart the cycle.
 
-## READINESS — are we actually ready for production?
+## F — FACTS
 
-1. **The uncomfortable truth** — state plainly: which part of this change are you least confident about, and what are you hoping nobody asks? Every change has a weakest point; "nothing" is itself a FAIL. Name it, then show the evidence that it holds — or record it as an accepted risk with an owner.
-2. **Validation on the final state** — build, typecheck, lint, and the full test suite ran against the branch tip as it will merge — not an earlier commit before the last "small fix". Report the real numbers.
-3. **Ran for real** — the change was exercised end-to-end in a production-like environment (staging smoke, emulator flow, the real app), not only in unit tests. Name what was actually invoked and what was observed. A feature nobody has watched work has not been verified.
-4. **Failure visibility** — if this misbehaves in production, how do we find out and how fast? Name the concrete signal: a log phrase, a metric row, an error surface, an alert. "Users will report it" is a FAIL — that is the absence of a signal.
-5. **Blast radius and rollback** — state what breaks if this change is wrong: which user-facing surfaces, scheduled jobs, and data. Is a plain revert safe, or does the change write data or emit events old code cannot read? Name the rollback mechanism and any point of no return.
-6. **Deploy order honored** — every infra-before-code dependency (indexes, TTL policies, rules, env vars, secrets, migrations) named with the exact deploy sequence per repo rules, and what degrades if a step ships out of order.
+1. **Uncomfortable truth** — name the part of the change with the weakest evidence and the question you most hope nobody asks. "Nothing" is a FAIL. Prove it safe or record it as residual risk with an owner.
+2. **Final state** — identify the exact branch tip and re-read the complete final diff adversarially. Confirm documented invariants for every touched area against what was built, not the original plan.
+3. **Validation evidence** — report build, typecheck, lint, full-suite, and relevant targeted-test results from the final state. Identify every changed branch that no test or manual run executed.
+4. **Operational evidence** — report the production-like end-to-end run, concrete failure signals, expected logs or metrics, affected user surfaces and jobs, data compatibility, rollback mechanism, and point of no return.
+5. **Deployment readiness** — list indexes, TTL policies, rules, variables, secrets, migrations, scheduled work, notifications, manual steps, and exact ordering constraints. State what happens if code arrives before infrastructure.
 
-## BUGS — where would a bug hide?
+## O — OPTIONS
 
-7. **Never-executed paths** — list every branch this change added that no test and no manual run has ever executed: error handlers, fallbacks, retries, rare-condition guards. Each one is a prime bug candidate — execute it now, or justify why it is provably correct by inspection.
-8. **Hostile diff read** — re-read the complete final diff top to bottom as an adversarial reviewer looking for the bug, not as the author confirming the plan. Report anything that made you pause, even briefly — a pause is a signal.
-9. **Edge inputs** — for the new code: empty, null/absent, zero, duplicate, oversized, concurrent, retried/redelivered, clock-skewed, timezone/DST-crossing, boundary-of-page inputs. Which of these can actually reach it, and what happens for each?
-10. **Swallowed errors** — audit every catch/ignore/fallback in the diff: what disappears silently, and would anyone ever know it happened? A silent catch with no log and no counter is a future debugging session with no evidence.
-11. **Idempotency and races** — can this code run twice (retry, at-least-once delivery, double-click, two instances, overlapping schedule)? What duplicates, corrupts, or double-charges when it does?
-12. **The avoided test** — which test did we not write because it would be hard to set up or might fail? That instinct is information. Write it now, or record it as an explicit accepted risk with an owner — never let it stay unspoken.
-13. **Contract re-check on the final diff** — the documented invariants for every touched area (project CLAUDE.md, feature KNOWLEDGE.md, decisions/pitfalls ledger) verified against the diff as it stands now — not against the plan from before implementation drifted.
+6. **Landing choices** — list the viable courses supported by the facts: land as-is, land through a staged or controlled rollout, fix and repeat the cycle, reduce scope, defer the change, or go around. Do not manufacture equivalence: eliminate any option that violates a hard invariant.
+7. **Simpler option** — explicitly test whether half the code, fewer abstractions, an existing dependency or pattern, or a narrower change satisfies the requirement with less production exposure.
+8. **Recovery options** — identify plain revert, feature or configuration disablement, forward fix, data repair, traffic shift, and full go-around. Mark unavailable recovery paths clearly.
 
-## SIMPLICITY — did we build the simplest thing that works?
+## R — RISKS & BENEFITS
 
-14. **Half-the-code test** — could this change be half the size and still work? For each new abstraction (class, layer, wrapper, indirection, config surface): name the second caller or concrete case that justifies it today. One caller means inline it.
-15. **Speculative generality** — list every flag, option, parameter, mode, and extension point built for an imagined future rather than a present requirement. Delete them — the future can add them back with better information than we have now.
-16. **New dependency and pattern audit** — every new package, pattern, or utility justified against the existing alternative already in the codebase. Consistency beats cleverness; a second way to do the same thing is a cost, not a feature.
-17. **Five-minute explanation** — can each touched module be explained to a teammate in five minutes? If explaining it requires walking through the history of how it got this way, it is too complex — simplify before landing, not after.
-18. **Residue swept** — dead code, commented-out blocks, tombstone comments, `*_old`/`v2` names, debug logging, leftover scaffolding, TODOs without tickets: all gone. Land the end-state, not the transition — git holds the history.
+9. **Option comparison** — for each option, state user benefit, delivery benefit, operational burden, reversibility, blast radius, and the cost of delay. A vague "low risk" or "faster" is not evidence.
+10. **Hidden-bug audit** — assess never-executed handlers, fallbacks, retries, edge inputs, oversized and duplicate inputs, swallowed errors, idempotency, races, overlapping schedules, clock skew, time zones, and page boundaries. Name what happens for every reachable case.
+11. **Avoided-test audit** — name the test omitted because setup was hard or failure was likely. Run it, select an option that removes the exposure, or record the risk with an owner.
+12. **Simplicity audit** — challenge one-caller indirection, speculative flags and modes, new packages or patterns, hard-to-explain modules, dead code, debug output, scaffolding, tombstone names, and TODOs without tickets. State the present requirement that justifies anything retained.
+13. **Deployment risk** — assess live-data and in-flight-client compatibility, infra-before-code hazards, rollback after writes or emitted events, observability delay, and every point after which a go-around becomes harder.
+
+## D — DECISION
+
+14. **Land or go around** — select one option and state why its benefits outweigh its risks. Record approver, residual risks and owners, prerequisites, success criteria, rollback threshold, and any point of no return. If a hard gate lacks evidence, the decision is **GO-AROUND**.
+15. **Authorization boundary** — distinguish approval of the readiness decision from authorization to merge, release, or deploy. Never infer production authorization from a request to review.
+
+## E — EXECUTION
+
+16. **Execute the authorized course** — complete required fixes and validation, then follow the exact approved merge, release, infrastructure, migration, and deployment order. Use the selected rollout controls and prepare the rollback commands before crossing the point of no return. If authorization stops at review, produce the execution plan without performing the release.
+
+## C — CHECK
+
+17. **Immediate verification** — after every executed step, verify the expected revision, environment, service health, user-visible behavior, data state, scheduled work, and required infrastructure. Report observed values, not "deployed successfully."
+18. **Monitor and decide again** — define each signal, baseline, observation window, threshold, owner, and response. A breached threshold triggers the selected rollback or go-around and starts a new FORDEC cycle with the new facts.
 
 ## Report format
 
-Output a table: `# | item | PASS/FAIL/N-A | one-line evidence`. Follow with a verdict line: **CLEAR TO LAND** or **GO-AROUND: <failing items>**. A FAIL is a hard stop — never land past one silently; fix it or escalate to the user. An honest GO-AROUND is cheaper than an incident.
+Output:
+
+1. a `Stage | # | item | PASS/FAIL/N-A | evidence` table;
+2. an **Options** table: `option | benefits | risks | reversibility`;
+3. a **Decision** line: **LAND**, **STAGED LANDING**, or **GO-AROUND**, with rationale, approver, and residual-risk owners;
+4. an **Execution** line: authorized actions completed or the exact pending plan;
+5. a **Check** table: `signal | expected | threshold | window | owner | response`;
+6. the verdict **CLEAR TO LAND** or **GO-AROUND: <failing items or unblock conditions>**.
+
+A FAIL is a hard stop. Never land past one silently. An honest go-around is cheaper than an incident.
