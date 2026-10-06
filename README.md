@@ -1,6 +1,6 @@
-# FORDEC Checklist Skills
+# Testflow
 
-Three Claude Code skills that adapt the aviation **FORDEC** decision model to software delivery, from branch creation through production monitoring.
+Four independent Claude Code skills that each apply the aviation-derived **FORDEC** decision model to a different situation. `before-startup`, `cruising`, and `landing` form an ordered software-delivery pipeline from branch creation through production monitoring. `fordec` is a separate, general-purpose emergency/incident decision skill — it does not sit above or chain the other three; it is simply one more skill in the set that happens to use the same FORDEC structure.
 
 ## The model
 
@@ -27,11 +27,13 @@ FACTS → OPTIONS → RISKS & BENEFITS → DECISION → EXECUTION → CHECK
 
 ## Skill workflow
 
+`before-startup` → `cruising` → `landing` is the ordered software-delivery pipeline:
+
 | Order | Skill | FORDEC role | When to use | Success verdict |
 |---:|---|---|---|---|
-| 1 | [`before-startup`](before-startup/SKILL.md) | Departure cycle | Once, before implementation begins | `CLEAR TO DEPART` |
-| 2 | [`cruising`](cruising/SKILL.md) | Repeating control cycle | At LAUNCH, COMMIT, and PR boundaries | `CLEAR TO PROCEED` |
-| 3 | [`landing`](landing/SKILL.md) | Final production cycle | Before final approval, merge, release, or deployment | `CLEAR TO LAND` |
+| 1 | [`before-startup`](.claude/skills/testflow/before-startup/SKILL.md) | Departure cycle | Once, before implementation begins | `CLEAR TO DEPART` |
+| 2 | [`cruising`](.claude/skills/testflow/cruising/SKILL.md) | Repeating control cycle | At LAUNCH, COMMIT, and PR boundaries | `CLEAR TO PROCEED` |
+| 3 | [`landing`](.claude/skills/testflow/landing/SKILL.md) | Final production cycle | Before final approval, merge, release, or deployment | `CLEAR TO LAND` |
 
 ```text
 before-startup: FORDEC departure
@@ -44,6 +46,8 @@ production CHECK → monitor → reopen FORDEC when thresholds are crossed
 ```
 
 A failed gate is a hard stop. Fix the evidence gap, choose another option, or explicitly escalate the risk; never silently continue.
+
+[`fordec`](.claude/skills/testflow/emergency/fordec/SKILL.md) is **not part of this pipeline**. It is an independent, standalone skill for any consequential situation that needs a time-aware decision — use it on its own, whenever it's needed, regardless of where you are in before-startup/cruising/landing.
 
 ## Skill responsibilities
 
@@ -79,6 +83,17 @@ Runs the final production decision:
 - executes only the authorized course;
 - checks production behavior against explicit signals, windows, thresholds, owners, and rollback triggers.
 
+### 4. Fordec
+
+Independent of the other three. Runs a standalone FORDEC cycle for emergencies and incidents:
+
+- gates on urgency first — immediate safety action before any analysis;
+- labels every fact as OBSERVED, REPORTED, INFERRED, or UNKNOWN;
+- compares feasible options, including hold, withdraw, or escalate;
+- supports Full, Rapid, or Immediate-action modes depending on available time;
+- assigns owners and deadlines to execution steps;
+- defines monitoring signals and the next decision point.
+
 ## Decision discipline
 
 - Facts must be evidence, not assumptions.
@@ -91,27 +106,42 @@ Runs the final production decision:
 
 ## Installation
 
-Each skill uses Claude's expected directory structure:
+Install the commands into the current project's `.claude/skills/testflow/` directory:
 
-```text
-before-startup/SKILL.md
-cruising/SKILL.md
-landing/SKILL.md
+```sh
+npx @medvijenia/checklist
 ```
 
-Copy the three directories into:
+Install them for the current user instead:
 
-- `.claude/skills/` for project-local use; or
-- `~/.claude/skills/` for user-wide use.
+```sh
+npx @medvijenia/checklist --global
+```
+
+The installer preserves modified skills. Pass `--force` only when you intend to replace local customizations.
+
+The npm package is also a valid Claude Code plugin. To load its namespaced commands without copying files:
+
+```sh
+npm install --save-dev @medvijenia/checklist
+claude --plugin-dir ./node_modules/@medvijenia/checklist
+```
+
+Plugin mode exposes `/testflow:before-startup`, `/testflow:cruising`, `/testflow:landing`, and `/testflow:fordec`.
 
 ## Invocation
 
-Claude can select the skills from their frontmatter descriptions. They can also be invoked explicitly:
+The installer exposes the commands without a namespace:
 
 ```text
 /before-startup
 /cruising
 /landing
+/fordec
 ```
 
-Preserve both orders: `before-startup` → `cruising` → `landing`, and F → O → R → D → E → C inside every skill.
+They are manual-only by design because their workflows can change branches, create commits, open pull requests, or deploy. Preserve the pipeline order for the first three — `before-startup` → `cruising` → `landing` — and F → O → R → D → E → C inside every skill. `fordec` is independent of that order and can be invoked on its own whenever a situation calls for it.
+
+## Agents
+
+No custom agent definitions are required. None of the skills names or forks to a custom subagent; `cruising` audits launches performed through Claude Code's built-in agent runtime. Shipping unused agent files would add context cost without changing behavior.
