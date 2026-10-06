@@ -1,6 +1,7 @@
 .env
 .*
 !.claude
+!.env.example
 src/core/data/
 credentials.json
 __pycache__/
