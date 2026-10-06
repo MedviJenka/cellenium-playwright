@@ -1,14 +1,10 @@
-"""High-level page actions on top of BrowserManager - the Playwright equivalent of
-cellenium-lite's DriverEngine, built on auto-waiting Locators instead of explicit
-WebDriverWait/By-strategy lookups.
-"""
 import uuid
 from typing import Optional
 from dataclasses import dataclass
 from playwright.sync_api import Locator
 from src.core.data.constants import SCREENSHOTS
-from src.core.functions.locators import get_locator, get_entry
 from src.core.engine.manager import BrowserManager
+from src.core.functions.locators import get_locator, get_entry
 
 
 @dataclass

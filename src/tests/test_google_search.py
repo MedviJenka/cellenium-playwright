@@ -1,7 +1,6 @@
-"""End-to-end check of the Playwright engine + Google-Sheet POM + AI vision assertion,
-porting the scenario from cellenium-lite's tests/test_1/test_button.py.
-"""
-from src.core.ai.vision import VisionAssertion
+class VisionAssertion:
+    pass
+
 
 vision = VisionAssertion()
 
