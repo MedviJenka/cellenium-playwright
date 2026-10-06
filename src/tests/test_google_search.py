@@ -1,5 +1,10 @@
 import pytest
 from src.core.engine.page_engine import PageEngine
+from src.core.functions.logger import Logger
+
+
+log = Logger(name='google sanity')
+
 
 
 class TestGoogleSearch:
@@ -10,3 +15,4 @@ class TestGoogleSearch:
         engine.get_element("search").fill("cats")
         engine.get_element("button").click()
         engine.get_screenshot()
+        log.fire('test complete')
