@@ -8,7 +8,7 @@ const test = require('node:test');
 
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
 const REPO_ROOT = path.resolve(PACKAGE_ROOT, '..');
-const FEATURE = 'testflow';
+const FEATURE = 'checklist';
 // Each skill is independent; fordec is one of them, not a parent of the rest.
 const SKILLS = [
   { name: 'before-startup', relPath: 'before-startup' },
@@ -19,12 +19,12 @@ const SKILLS = [
 const SKILL_NAMES = SKILLS.map(({ name }) => name);
 
 function makeTempDir(t) {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'testflow-'));
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'checklist-'));
   t.after(() => fs.rmSync(directory, { force: true, recursive: true }));
   return directory;
 }
 
-test('plugin manifest exposes all four independent testflow skills', () => {
+test('plugin manifest exposes all four independent checklist skills', () => {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(REPO_ROOT, '.claude-plugin', 'plugin.json'), 'utf8'),
   );
@@ -32,7 +32,7 @@ test('plugin manifest exposes all four independent testflow skills', () => {
     fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'),
   );
 
-  assert.equal(manifest.name, 'testflow');
+  assert.equal(manifest.name, 'checklist');
   assert.equal(manifest.version, packageJson.version);
   for (const { relPath } of SKILLS) {
     assert.ok(

@@ -1,179 +1,205 @@
-# Testflow
+# Cellenium Playwright
 
-Four independent Claude Code skills that each apply the aviation-derived **FORDEC** decision model to a different situation. `before-startup`, `cruising`, and `landing` form an ordered software-delivery pipeline from branch creation through production monitoring. `fordec` is a separate, general-purpose emergency/incident decision skill — it does not sit above or chain the other three; it is simply one more skill in the set that happens to use the same FORDEC structure.
+Cellenium Playwright is an experimental Python browser-automation toolkit built on [Playwright](https://playwright.dev/python/). It provides browser lifecycle management, a Google-Sheets-backed Page Object Model (POM), screenshot capture, and components for structured visual analysis with CrewAI.
 
-## The model
+The repository also contains **TestFlow**, a set of Claude Code skills that turns product requirements and technical specifications into traceable pytest tests, validated UI locators, execution evidence, and a test-quality verdict.
 
-FORDEC is a decision cycle, not a linear task checklist:
+> **Status:** active development. The browser and locator layers are usable, but the checked-in vision test is still a scaffold and does not currently pass. This repository is not published as a Python package; install it from a source checkout with `uv`.
 
-| Stage | Question | Required output |
-|---|---|---|
-| **F — Facts** | What is true now? | Fresh command output, repository rules, observed behavior, and known unknowns |
-| **O — Options** | What can we do? | Viable courses, including holding position or going around |
-| **R — Risks & Benefits** | What does each option gain and expose? | Concrete tradeoffs, reversibility, blast radius, and cost of delay |
-| **D — Decision** | Which option are we choosing? | Explicit course, rationale, owner, accepted risks, and success criteria |
-| **E — Execution** | How do we carry it out? | Ordered actions within the approved scope |
-| **C — Check** | Did it work, and how will we know if conditions change? | Observed results, monitoring signals, thresholds, owners, and reconsideration triggers |
+## Features
 
-The order is mandatory:
+- Synchronous Chromium, Firefox, or WebKit sessions through Playwright.
+- Reusable `PageEngine` helpers for navigation, locators, screenshots, scrolling, dropdowns, and tabs.
+- Page Object Model data read directly from Google Sheets at runtime.
+- Locator strategies for name, XPath, ID, CSS, class name, link text, and tag name.
+- Structured image-analysis components built with CrewAI and Pydantic.
+- Parallel pytest execution in CI on Python 3.13 and 3.14.
+- Optional TestFlow skills for end-to-end pytest test generation and evaluation.
+
+## Requirements
+
+- Python 3.13 or 3.14
+- [`uv`](https://docs.astral.sh/uv/)
+- A Playwright-supported browser
+- A Google service account for resolving locators
+- An OpenAI-compatible model and API key when using the vision components
+
+## Quick start
+
+Clone the repository and install the locked dependencies:
+
+```sh
+git clone https://github.com/MedviJenka/cellenium-playwright.git
+cd cellenium-playwright
+uv sync --frozen
+```
+
+Install Chromium:
+
+```sh
+uv run playwright install chromium
+```
+
+On Ubuntu or another Debian-based CI runner, install Chromium and its system dependencies together:
+
+```sh
+uv run playwright install --with-deps chromium
+```
+
+## Configuration
+
+Create `.env` in the repository root. Optional values are labeled below:
+
+```dotenv
+GOOGLE_SHEETS=<spreadsheet-id-or-edit-url>
+GOOGLE_SHEET_API_KEY=<google-api-key>
+GOOGLE_SHEET_EMAIL=<service-account-email>
+GOOGLE_SHEET_ID=<spreadsheet-id>
+OPENAI_MODEL=<model-name>
+OPENAI_API_KEY=<optional-api-key>
+LOGFIRE_TOKEN=<optional-logfire-token>
+TEST_HEADLESS=true
+```
+
+`GOOGLE_SHEETS` selects the locator spreadsheet. When `LOGFIRE_TOKEN` is omitted, logging remains local and no data is sent to Logfire.
+
+Place the Google service-account document at:
 
 ```text
-FACTS → OPTIONS → RISKS & BENEFITS → DECISION → EXECUTION → CHECK
-   ↑                                                        │
-   └──────────── new facts, failed check, or monitor alert ─┘
+credentials.json
 ```
 
-**Decision comes before Execution.** If Execution or Check reveals a material new fact, stop and restart the cycle instead of defending the old decision.
+Share the locator spreadsheet with the service account's `client_email` as a viewer. Never commit `.env` or `credentials.json`; both are ignored by Git.
 
-## Skill workflow
+## Google Sheets Page Object Model
 
-`before-startup` → `cruising` → `landing` is the ordered software-delivery pipeline:
+Each worksheet tab represents one screen. The first row must contain these columns:
 
-| Order | Skill | FORDEC role | When to use | Success verdict |
-|---:|---|---|---|---|
-| 1 | [`before-startup`](.claude/skills/testflow/before-startup/SKILL.md) | Departure cycle | Once, before implementation begins | `CLEAR TO DEPART` |
-| 2 | [`cruising`](.claude/skills/testflow/cruising/SKILL.md) | Repeating control cycle | At LAUNCH, COMMIT, and PR boundaries | `CLEAR TO PROCEED` |
-| 3 | [`landing`](.claude/skills/testflow/landing/SKILL.md) | Final production cycle | Before final approval, merge, release, or deployment | `CLEAR TO LAND` |
+| Column | Purpose |
+|---|---|
+| `name` | Logical element name used by tests |
+| `locator` | Locator strategy such as `NAME`, `XPATH`, `ID`, or `CSS` |
+| `type` | Locator value; this name is retained for compatibility with the source sheet |
+| `actions` | Optional metadata |
+| `comments` | Optional notes |
+
+Example worksheet:
+
+| name | locator | type | actions | comments |
+|---|---|---|---|---|
+| search | NAME | q | fill | Google search field |
+| button | NAME | btnK | click | Search button |
+
+`PageEngine(screen="Google")` reads locator rows directly from the worksheet tab
+named `Google`. No generated JSON mapping or synchronization step is required.
+
+## Browser automation
+
+```python
+from src.core.engine.page_engine import PageEngine
+
+engine = PageEngine(screen="Google", headless=True)
+
+try:
+    engine.get_web("https://www.google.com")
+    engine.get_element("search").fill("cats")
+    engine.get_element("button").click()
+    screenshot = engine.get_screenshot("google-results")
+    print(screenshot)
+finally:
+    engine.teardown()
+```
+
+`screen="Google"` selects the worksheet tab named `Google`. With multiple tabs, pass the page's tab name when constructing `PageEngine` (for example, `Google`, `Heroku`, or `ST`). Missing worksheets, missing element names, and unsupported locator strategies raise explicit exceptions.
+
+## Tests and linting
+
+Run the test suite:
+
+```sh
+uv run --frozen pytest src/tests tests -v -n auto --dist loadscope
+```
+
+`src/tests/test_google_search.py` exercises the live browser flow. The unit regressions in `tests/` cover screenshot persistence and direct worksheet selection without contacting external services.
+
+Run the blocking CI lint checks:
+
+```sh
+uvx --from flake8==7.4.1 flake8 main.py settings.py src \
+  --count --select=E9,F63,F7,F82 --show-source --statistics
+```
+
+The GitHub Actions workflow in `.github/workflows/python-package.yml` performs locked dependency installation, installs Chromium, runs lint checks, and executes the tests under Xvfb for Python 3.13 and 3.14.
+
+## TestFlow Claude Code skills
+
+TestFlow separates pytest creation into focused stages:
 
 ```text
-before-startup: FORDEC departure
-        ↓
-cruising: FORDEC at LAUNCH → COMMIT → repeat → PR
-        ↓
-landing: final FORDEC → LAND / STAGED LANDING / GO-AROUND
-        ↓
-production CHECK → monitor → reopen FORDEC when thresholds are crossed
+PRD → test specification → UI locators → pytest writer → executor → evaluator
 ```
 
-A failed gate is a hard stop. Fix the evidence gap, choose another option, or explicitly escalate the risk; never silently continue.
+| Order | Skill | Purpose |
+|---:|---|---|
+| Optional | `web` | Explore a live application in a real browser and produce reproducible bug evidence |
+| 1 | `prd-reader` | Extract explicit, derived, and unknown test requirements from the PRD |
+| 2 | `test-spec` | Design traceable pytest cases, boundaries, fixtures, and execution prerequisites |
+| 3 | `locator-writer` | For UI cases, validate stable Playwright selectors and upsert elements into Google Sheets |
+| 4 | `writer` | Implement deterministic, behavior-focused pytest tests |
+| 5 | `executor` | Run collection, targeted tests, related tests, and classify failures |
+| 6 | `evaluator` | Evaluate traceability, regression sensitivity, coverage quality, and execution evidence |
 
-[`fordec`](.claude/skills/testflow/emergency/fordec/SKILL.md) is **not part of this pipeline**. It is an independent, standalone skill for any consequential situation that needs a time-aware decision — use it on its own, whenever it's needed, regardless of where you are in before-startup/cruising/landing.
+`artifact` orchestrates the complete pipeline and repeats only the affected downstream stages when evaluation finds a defect.
 
-## Skill responsibilities
+`web` is a report-only exploratory entry point. Verified findings become regression candidates for `test-spec`; it does not modify application code.
 
-### 1. Before Startup
-
-Runs the departure decision before implementation:
-
-- establishes the real branch, remote, working-tree, baseline, dependency, environment, traffic, and blocker state;
-- compares safe departure options, including holding position;
-- evaluates lost-work, history, conflict, dependency, and irreversibility risks;
-- chooses the branch and synchronization plan before changing state;
-- executes only the selected plan;
-- checks that the task branch, base, baseline, environment, and prerequisites are safe.
-
-### 2. Cruising
-
-Runs a complete FORDEC cycle at each implementation boundary:
-
-- **LAUNCH:** decides whether and how to start or resume an agent or phase;
-- **COMMIT:** decides whether the phase is coherent, tested, in scope, and ready to close;
-- **PR:** decides whether the change and its operational plan are ready for review.
-
-It preserves TDD evidence, architecture and contract compliance, scope control, operational detail, rollback planning, and monitoring triggers. `Cruising` repeats as conditions change.
-
-### 3. Landing
-
-Runs the final production decision:
-
-- treats green checks as facts rather than automatic approval;
-- compares landing, staged landing, remediation, scope reduction, deferment, and go-around;
-- audits hidden bugs, avoided tests, complexity, blast radius, compatibility, deploy order, and rollback;
-- separates a readiness decision from authorization to merge or deploy;
-- executes only the authorized course;
-- checks production behavior against explicit signals, windows, thresholds, owners, and rollback triggers.
-
-### 4. Fordec
-
-Independent of the other three. Runs a standalone FORDEC cycle for emergencies and incidents:
-
-- gates on urgency first — immediate safety action before any analysis;
-- labels every fact as OBSERVED, REPORTED, INFERRED, or UNKNOWN;
-- compares feasible options, including hold, withdraw, or escalate;
-- supports Full, Rapid, or Immediate-action modes depending on available time;
-- assigns owners and deadlines to execution steps;
-- defines monitoring signals and the next decision point.
-
-## Decision discipline
-
-- Facts must be evidence, not assumptions.
-- Options come before preference; include a safe hold or go-around.
-- Risks and Benefits are paired for every viable option.
-- One-way-door decisions and destructive actions require explicit user approval.
-- Execution must match the recorded Decision.
-- Check means active monitoring, not merely confirming that a command exited successfully.
-- A material new fact reopens FORDEC at **F**, even if work is already underway.
-
-## Installation
-
-Install the commands into the current project's `.claude/skills/testflow/` directory:
+Validate the Claude Code plugin metadata:
 
 ```sh
-npx @medvijenia/checklist
+claude plugin validate .
 ```
 
-Install them for the current user instead:
-
-```sh
-npx @medvijenia/checklist --global
-```
-
-The installer preserves modified skills. Pass `--force` only when you intend to replace local customizations.
-
-The npm package is also a valid Claude Code plugin. To load its namespaced commands without copying files:
-
-```sh
-npm install --save-dev @medvijenia/checklist
-claude --plugin-dir ./node_modules/@medvijenia/checklist
-```
-
-Plugin mode exposes `/testflow:before-startup`, `/testflow:cruising`, `/testflow:landing`, and `/testflow:fordec`.
-
-## Invocation
-
-The installer exposes the commands without a namespace:
+Run Claude Code from the repository and invoke either the complete pipeline or an individual stage:
 
 ```text
-/before-startup
-/cruising
-/landing
-/fordec
+/testflow:web
+/testflow:artifact
+/testflow:prd-reader
+/testflow:test-spec
+/testflow:locator-writer
+/testflow:writer
+/testflow:executor
+/testflow:evaluator
 ```
 
-They are manual-only by design because their workflows can change branches, create commits, open pull requests, or deploy. Preserve the pipeline order for the first three — `before-startup` → `cruising` → `landing` — and F → O → R → D → E → C inside every skill. `fordec` is independent of that order and can be invoked on its own whenever a situation calls for it.
+The skills are manual-only. The locator writer previews changes before replacing existing Google Sheet selectors and verifies selectors against the live UI.
 
-## Agents
+The separate checklist skills live under `.claude/skills/checklist/`: `before-startup` (system ready to build tests), `cruising` (everything in place, critical errors and potential bugs), `landing` (final production readiness), and the standalone `fordec` emergency decision skill.
 
-No custom agent definitions are required. None of the skills names or forks to a custom subagent; `cruising` audits launches performed through Claude Code's built-in agent runtime. Shipping unused agent files would add context cost without changing behavior.
+## Project layout
 
-## Playwright QA framework (`src/`)
-
-Separate from the Testflow skills above: `src/` is a small Playwright-based test-automation
-framework - a Google-Sheet-backed Page Object Model plus an AI vision assertion, ported from
-[cellenium-lite](https://github.com/MedviJenka/cellenium-lite)'s Selenium engine.
-
-- `src/core/engine/` - `BrowserManager` (launches a Playwright browser/context/page) and
-  `PageEngine` (navigate, resolve locators, screenshot, wait, scroll, tabs, teardown).
-- `src/core/functions/sheets.py` / `locators.py` - syncs every worksheet tab of a Google
-  Sheet (one tab = one "screen") into `src/core/data/locators.json`, then resolves
-  `(screen, name)` POM entries into Playwright `Locator`s.
-- `src/core/ai/` - `VisionAssertion`, an AI vision check for tests: screenshot a page and
-  ask a vision-capable OpenAI model whether it satisfies a prompt, instead of asserting on
-  DOM text alone.
-
-Setup:
-
-```sh
-uv run playwright install chromium        # one-time browser download
-uv run python -m src.core.functions.sheets # sync Google Sheet locators -> locators.json
+```text
+.github/workflows/               GitHub Actions CI
+.claude/skills/testflow/         Pytest TestFlow skill definitions
+.claude/skills/checklist/        Checklist skills (before-startup, cruising, landing, fordec)
+.claude/commands/testflow/       TestFlow slash-command entries
+.claude-plugin/plugin.json       Claude Code plugin metadata
+src/core/engine/                 Playwright browser and page engines
+src/core/functions/              Locator resolution and direct Google Sheets access
+src/core/ai/                     CrewAI configuration and vision components
+src/tests/                       Browser test scenarios
+settings.py                      Environment-backed runtime configuration
+pyproject.toml                   Python requirements and dependencies
+uv.lock                          Reproducible dependency lockfile
 ```
 
-Required `.env` values: `GOOGLE_SHEETS` (sheet ID or URL), `OPENAI_MODEL`, and
-`OPENAI_API_KEY` (consumed directly by `crewai.LLM`); `credentials.json` (Google service
-account, shared as Viewer on the sheet) for the locator sync.
+## Known limitations
 
-Run the tests:
+- The checked-in vision test uses a placeholder `VisionAssertion` without a `run()` implementation.
+- The sample end-to-end test depends on Google and is not hermetic.
+- Configuration currently requires fields that are reserved but not consumed by every component.
+- The project does not yet define a wheel/sdist build or publishing workflow.
 
-```sh
-uv run pytest src/tests -v
-```
+## License
+
+Licensed under the [ISC License](LICENSE). Copyright © 2026 Jenia Petrusenko.

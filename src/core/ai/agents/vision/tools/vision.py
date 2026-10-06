@@ -142,11 +142,12 @@ class VisionMessageBuilder:
 
 class VisionTool(BaseTool):
 
-    name: str = "Bini Vision Tool"
-    description: str = "Analyzes one or more images using a vision-capable LLM"
+    name:        str             = "Bini Vision Tool"
+    description: str             = "Analyzes one or more images using a vision-capable LLM"
     args_schema: Type[BaseModel] = ImagePromptSchema
 
     def __init__(self, llm: LLM) -> None:
+
         super().__init__()
 
         if llm is None:

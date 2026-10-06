@@ -1,6 +1,6 @@
 ---
 name: landing
-description: Final FORDEC production-readiness cycle. Use before final PR approval, merge, release, or production deployment to establish Facts, compare land and go-around Options, assess Risks and Benefits, make an explicit Decision, define or perform the authorized Execution, and Check production signals with rollback triggers.
+description: Final production-readiness checklist. Use before final PR approval, merge, release, or production deployment to verify the final state, compare land and go-around options, make an explicit decision, define or perform the authorized execution, and check production signals with rollback triggers.
 command: /landing
 ---
 

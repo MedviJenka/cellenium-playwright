@@ -1,4 +1,5 @@
-"""Bootstrap a Playwright browser/context/page.
+"""
+Bootstrap a Playwright browser/context/page.
 
 Playwright ships and manages its own browser binaries (one-time setup:
 `playwright install chromium`) - unlike Selenium, there is no driver-manager
@@ -7,6 +8,7 @@ download step to wire up here.
 from typing import Optional
 from dataclasses import dataclass, field
 from playwright.sync_api import sync_playwright, Browser, BrowserContext, Page, Playwright
+from settings import Config
 
 
 @dataclass
@@ -22,7 +24,7 @@ class BrowserManager:
         constructor field here rather than a runtime method.
     """
 
-    headless: bool = False
+    headless: bool = Config.TEST_HEADLESS
     browser_name: str = "chromium"
     http_credentials: Optional[dict] = None
     playwright: Playwright = field(init=False, repr=False)
