@@ -1,10 +1,18 @@
 import uuid
-from typing import Optional
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Literal, Optional
+
 from playwright.sync_api import Locator
-from src.core.data.constants import SCREENSHOTS
+
 from src.core.engine.manager import BrowserManager
-from src.core.functions.locators import get_locator, get_entry
+from src.core.functions.locators import get_entry, get_locator
+from src.core.functions.logger import Logger
+
+SCREENSHOTS = Path(__file__).resolve().parent.parent / "data" / "screenshots"
+
+
+log = Logger(name='browser-manager')
 
 
 @dataclass
@@ -14,10 +22,12 @@ class PageEngine(BrowserManager):
 
     def get_web(self, url: str) -> None:
         self.page.goto(url)
+        log.fire(message=f'web opened: {url}')
 
     def get_element(self, name: str, timeout: int = 10_000) -> Locator:
         locator = get_locator(self.page, self.screen, name)
         locator.wait_for(state="attached", timeout=timeout)
+        log.fire(message=f'element used: {name}')
         return locator
 
     def get_dynamic_element(self, attribute: str, name: str) -> Locator:
@@ -30,6 +40,7 @@ class PageEngine(BrowserManager):
     def wait_for_element(self, name: str, timeout: int = 5_000) -> Locator:
         locator = get_locator(self.page, self.screen, name)
         locator.wait_for(state="visible", timeout=timeout)
+        log.fire(message=f'waiting for element: {name}')
         return locator
 
     def get_screenshot(self, name: Optional[str] = None) -> str:
@@ -53,7 +64,7 @@ class PageEngine(BrowserManager):
     def press_keyboard_key(self, key: str) -> None:
         self.page.keyboard.press(f"Control+{key}")
 
-    def scroll_page(self, direction: str, px: int) -> None:
+    def scroll_page(self, direction: Literal['up', 'down'], px: int) -> None:
         match direction:
             case "up":
                 self.page.mouse.wheel(0, -px)
@@ -63,6 +74,7 @@ class PageEngine(BrowserManager):
     def switch_to_new_tab(self, url: str) -> None:
         new_page = self.context.new_page()
         new_page.goto(url)
+        log.fire(message=f'url switched to {url}')
 
     def switch_to_main_tab(self) -> None:
         self.page = self.context.pages[0]

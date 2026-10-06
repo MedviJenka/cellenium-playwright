@@ -6,10 +6,10 @@ const os = require('node:os');
 const path = require('node:path');
 
 const PACKAGE_ROOT = path.resolve(__dirname, '..');
-const FEATURE = 'testflow';
-// Each skill is independent; FORDEC is only one of them (the emergency skill).
-// `relPath` is where the skill lives under skills/testflow/ in this repo;
-// it installs flat as skills/testflow/<name> regardless of source nesting.
+const FEATURE = 'checklist';
+// Each skill is independent; fordec is the standalone emergency skill.
+// `relPath` is where the skill lives under skills/checklist/ in this repo;
+// it installs flat as skills/checklist/<name> regardless of source nesting.
 const SKILLS = [
   { name: 'before-startup', relPath: 'before-startup' },
   { name: 'cruising', relPath: 'cruising' },
@@ -71,7 +71,7 @@ function installSkills({ projectRoot = process.cwd(), global = false, force = fa
 }
 
 function printHelp() {
-  process.stdout.write(`Testflow installer (independent FORDEC-style skills; fordec is one of several, not the whole set)\n\nUsage:\n  fordec-checklist [--global] [--force]\n\nOptions:\n  --global   Install into ~/.claude/skills/testflow instead of ./.claude/skills/testflow\n  --force    Replace skills with local modifications\n  --help     Show this help\n  --version  Show the package version\n`);
+  process.stdout.write(`Checklist skills installer (before-startup, cruising, landing, fordec)\n\nUsage:\n  fordec-checklist [--global] [--force]\n\nOptions:\n  --global   Install into ~/.claude/skills/testflow instead of ./.claude/skills/testflow\n  --force    Replace skills with local modifications\n  --help     Show this help\n  --version  Show the package version\n`);
 }
 
 function run(argv = process.argv.slice(2)) {

@@ -1,6 +1,6 @@
 ---
 name: cruising
-description: Repeating FORDEC control cycle for implementation work. Use before launching or resuming an agent, committing a phase, or opening or updating a PR to establish Facts, compare Options, assess Risks and Benefits, make a Decision, Execute it with TDD and operational discipline, and Check results, drift, and monitoring.
+description: In-flight check while tests are being built. Use after any TestFlow stage, after writing or changing tests, or before a commit or PR to verify that everything is in place and to hunt for critical errors and potential bugs in the tests, locators, fixtures, and observed product behavior.
 command: /cruising
 ---
 

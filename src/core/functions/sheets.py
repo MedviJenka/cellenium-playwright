@@ -1,12 +1,10 @@
-"""Sync Page Object Model locators from a Google Sheet via a service account.
-
+"""Read Page Object Model locators directly from Google Sheets.
 Uses gspread with a service-account credentials.json (no "anyone with the
 link" sharing required) - the sheet just needs to be shared with the service
 account's client_email (see credentials.json) as a Viewer.
 
-Each worksheet (tab) in the spreadsheet is treated as one "screen" - mirrors
-cellenium-lite's DriverEngine(screen="Google") model, so one spreadsheet can
-back locators for multiple pages.
+Each worksheet (tab) in the spreadsheet is one screen. Callers select the
+worksheet by passing the same screen name used by ``PageEngine``.
 
 Sheet columns (per the QA team's POM sheet):
     name    - identifier used to look up the locator in code
@@ -15,14 +13,14 @@ Sheet columns (per the QA team's POM sheet):
     actions - optional
     comments - optional
 """
-import json
 import re
-import gspread
 from pathlib import Path
+
+import gspread
+
 from settings import Config
 
 CREDENTIALS_PATH = Path(__file__).resolve().parent.parent.parent.parent / "credentials.json"
-OUTPUT_PATH = Path(__file__).resolve().parent.parent / "data" / "locators.json"
 
 _ID_RE = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
 
@@ -54,27 +52,21 @@ def _parse_worksheet(worksheet: gspread.Worksheet) -> dict[str, dict[str, str]]:
     return locators
 
 
-def fetch_locators(credentials_path: Path = CREDENTIALS_PATH) -> dict[str, dict[str, dict[str, str]]]:
-    """Pull every worksheet in the POM sheet. Returns {screen: {name: {type, value, actions, comments}}}."""
-    spreadsheet_id = _parse_sheet_id(Config.GOOGLE_SHEETS)
+def fetch_locators(
+    screen: str | None,
+    credentials_path: Path = CREDENTIALS_PATH,
+) -> dict[str, dict[str, str]]:
+    """Read all locator rows from one worksheet selected by screen name."""
+    if not screen:
+        raise ValueError("screen is required to select a Google Sheets worksheet")
 
+    spreadsheet_id = _parse_sheet_id(Config.GOOGLE_SHEETS)
     gc = gspread.service_account(filename=str(credentials_path))
     spreadsheet = gc.open_by_key(spreadsheet_id)
 
-    return {
-        worksheet.title: _parse_worksheet(worksheet)
-        for worksheet in spreadsheet.worksheets()
-    }
+    try:
+        worksheet = spreadsheet.worksheet(screen)
+    except gspread.WorksheetNotFound as exc:
+        raise KeyError(f"No worksheet named {screen!r} in the configured Google Sheet") from exc
 
-
-def sync_locators(output_path: Path = OUTPUT_PATH) -> Path:
-    """Fetch the sheet and cache it as JSON so tests don't hit the API at runtime."""
-    locators = fetch_locators()
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(locators, indent=2), encoding="utf-8")
-    return output_path
-
-
-if __name__ == "__main__":
-    path = sync_locators()
-    print(f"Synced locators -> {path}")
+    return _parse_worksheet(worksheet)

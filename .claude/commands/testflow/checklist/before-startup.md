@@ -1,6 +1,6 @@
 ---
 name: before-startup
-description: FORDEC departure checklist for software work. Use before writing implementation code to establish Facts, compare Options, assess Risks and Benefits, make an explicit Decision, Execute the departure plan, and Check that the branch, baseline, dependencies, environment, and task are safe to proceed.
+description: System readiness check before building tests. Use before starting TestFlow or writing any test to verify that the repository, toolchain, browsers, configuration, external services, test infrastructure, baseline, and inputs are healthy and ready for test creation.
 command: /before-startup
 ---
 

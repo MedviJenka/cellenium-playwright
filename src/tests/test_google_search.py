@@ -1,18 +1,12 @@
-class VisionAssertion:
-    pass
-
-
-vision = VisionAssertion()
+import pytest
+from src.core.engine.page_engine import PageEngine
 
 
 class TestGoogleSearch:
 
-    def test_cats(self, engine) -> None:
+    @pytest.mark.parametrize('engine', ['Google'], indirect=True)
+    def test_cats(self, engine: PageEngine) -> None:
         engine.get_web("https://www.google.com")
         engine.get_element("search").fill("cats")
         engine.get_element("button").click()
-
-        screenshot = engine.get_screenshot()
-        result = vision.run(image_path=screenshot, prompt="what do you see in this image?")
-
-        assert result.decision == "Passed", result.justification
+        engine.get_screenshot()

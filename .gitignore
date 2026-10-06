@@ -5,3 +5,4 @@ src/core/data/
 credentials.json
 __pycache__/
 *.pyc
+.gstack/
