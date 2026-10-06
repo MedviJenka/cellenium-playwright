@@ -145,3 +145,35 @@ They are manual-only by design because their workflows can change branches, crea
 ## Agents
 
 No custom agent definitions are required. None of the skills names or forks to a custom subagent; `cruising` audits launches performed through Claude Code's built-in agent runtime. Shipping unused agent files would add context cost without changing behavior.
+
+## Playwright QA framework (`src/`)
+
+Separate from the Testflow skills above: `src/` is a small Playwright-based test-automation
+framework - a Google-Sheet-backed Page Object Model plus an AI vision assertion, ported from
+[cellenium-lite](https://github.com/MedviJenka/cellenium-lite)'s Selenium engine.
+
+- `src/core/engine/` - `BrowserManager` (launches a Playwright browser/context/page) and
+  `PageEngine` (navigate, resolve locators, screenshot, wait, scroll, tabs, teardown).
+- `src/core/functions/sheets.py` / `locators.py` - syncs every worksheet tab of a Google
+  Sheet (one tab = one "screen") into `src/core/data/locators.json`, then resolves
+  `(screen, name)` POM entries into Playwright `Locator`s.
+- `src/core/ai/` - `VisionAssertion`, an AI vision check for tests: screenshot a page and
+  ask a vision-capable OpenAI model whether it satisfies a prompt, instead of asserting on
+  DOM text alone.
+
+Setup:
+
+```sh
+uv run playwright install chromium        # one-time browser download
+uv run python -m src.core.functions.sheets # sync Google Sheet locators -> locators.json
+```
+
+Required `.env` values: `GOOGLE_SHEETS` (sheet ID or URL), `OPENAI_MODEL`, and
+`OPENAI_API_KEY` (consumed directly by `crewai.LLM`); `credentials.json` (Google service
+account, shared as Viewer on the sheet) for the locator sync.
+
+Run the tests:
+
+```sh
+uv run pytest src/tests -v
+```
