@@ -51,11 +51,14 @@ uv run playwright install --with-deps chromium
 In the project where you use cellenium, run:
 
 ```sh
-cellenium init     # writes a .env template, adds .env and credentials.json to .gitignore, installs Chromium
+cellenium init     # writes a .env template, adds .env and credentials.json to .gitignore, installs Chromium and the Claude Code commands
+cellenium claude   # (re)installs the /cellenium:* Claude Code commands and skills into .claude/
 cellenium doctor   # checks settings, credentials.json, Google Sheet access, and that Chromium launches
 ```
 
 `cellenium init --with-deps` also installs Chromium's system libraries (Linux/CI). `cellenium doctor --offline` skips opening the sheet; it exits non-zero when a check fails, so it can gate CI.
+
+`cellenium claude --global` installs the commands into `~/.claude` so they are available in every project; locally modified files are kept unless you pass `--force`. Restart Claude Code after installing. `cellenium init --skip-claude` skips this step.
 
 Settings are read from `.env` in the working directory or from environment variables:
 
@@ -163,14 +166,14 @@ claude plugin validate .
 Run Claude Code from the repository and invoke either the complete pipeline or an individual stage:
 
 ```text
-/testflow:web
-/testflow:artifact
-/testflow:prd-reader
-/testflow:test-spec
-/testflow:locator-writer
-/testflow:writer
-/testflow:executor
-/testflow:evaluator
+/cellenium:web
+/cellenium:artifact
+/cellenium:prd-reader
+/cellenium:test-spec
+/cellenium:locator-writer
+/cellenium:writer
+/cellenium:executor
+/cellenium:evaluator
 ```
 
 The skills are manual-only. The locator writer previews changes before replacing existing Google Sheet selectors and verifies selectors against the live UI.
@@ -181,9 +184,9 @@ The separate checklist skills live under `.claude/skills/checklist/`: `before-st
 
 ```text
 .github/workflows/               GitHub Actions CI
-.claude/skills/testflow/         Pytest TestFlow skill definitions
+.claude/skills/cellenium/        Pytest TestFlow skill definitions
 .claude/skills/checklist/        Checklist skills (before-startup, cruising, landing, fordec)
-.claude/commands/testflow/       TestFlow slash-command entries
+.claude/commands/cellenium/      TestFlow slash-command entries
 .claude-plugin/plugin.json       Claude Code plugin metadata
 src/core/engine/                 Playwright browser and page engines
 src/core/functions/              Locator resolution and direct Google Sheets access

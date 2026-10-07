@@ -1,3 +1,5 @@
+from asyncio import get_running_loop
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from cellenium.ai.config import AgentConfig
 from crewai import Agent, Crew, Task
@@ -25,9 +27,20 @@ class Vision(AgentConfig):
         return Crew(agents=self.agents, tasks=self.tasks, verbose=True)
 
 
-def run_vision_agent(image: list[str], prompt: str) -> VisionSchema:
-    return Vision().crew().kickoff({'image': image, 'prompt': prompt}).pydantic.model_dump()
+def run_vision_agent(image: list[str], prompt: str) -> dict:
+    inputs = {'image': image, 'prompt': prompt}
+
+    def kickoff() -> dict:
+        return Vision().crew().kickoff(inputs).pydantic.model_dump()
+
+    try:
+        get_running_loop()
+    except RuntimeError:
+        return kickoff()
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        return executor.submit(kickoff).result()
 
 
 if __name__ == '__main__':
-    print(run_vision_agent(prompt='what is displayed?', image=[r'C:\Users\medvi\PycharmProjects\PythonProject\tests\files\images\img.png']))
+    print(run_vision_agent(prompt='what is displayed?', image=[r'C:\Users\medvi\OneDrive\Desktop\checklist\data\screenshots\img.png']))

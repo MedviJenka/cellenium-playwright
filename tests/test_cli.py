@@ -40,7 +40,7 @@ def test_init_installs_chromium_with_current_interpreter(monkeypatch):
     commands = []
     monkeypatch.setattr(cli.subprocess, "run", lambda command: commands.append(command) or type("Done", (), {"returncode": 0})())
 
-    assert cli.main(["init", "--with-deps"]) == 0
+    assert cli.main(["init", "--with-deps", "--skip-claude"]) == 0
 
     assert commands == [[cli.sys.executable, "-m", "playwright", "install", "--with-deps", "chromium"]]
 
@@ -70,3 +70,30 @@ def test_doctor_fails_without_credentials(monkeypatch, capsys):
     assert cli.main(["doctor", "--offline", "--skip-browser"]) == 1
 
     assert "credentials.json not found" in capsys.readouterr().out
+
+
+def test_init_installs_claude_commands(project):
+    assert cli.main(["init", "--skip-browser"]) == 0
+
+    assert (project / ".claude/commands/cellenium/artifact.md").is_file()
+    assert (project / ".claude/skills/cellenium/artifact/SKILL.md").is_file()
+
+
+def test_claude_keeps_modified_files_unless_forced(project):
+    cli.main(["claude"])
+    command = project / ".claude/commands/cellenium/web.md"
+    command.write_text("mine", encoding="utf-8")
+
+    assert cli.main(["claude"]) == 1
+    assert command.read_text(encoding="utf-8") == "mine"
+
+    assert cli.main(["claude", "--force"]) == 0
+    assert command.read_text(encoding="utf-8") != "mine"
+
+
+def test_claude_global_installs_into_home(project, monkeypatch):
+    monkeypatch.setattr(cli.Path, "home", lambda: project / "home")
+
+    assert cli.main(["claude", "--global"]) == 0
+
+    assert (project / "home/.claude/commands/cellenium/web.md").is_file()

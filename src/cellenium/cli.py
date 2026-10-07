@@ -1,9 +1,11 @@
 """
 cellenium command line.
 
-    cellenium init     scaffold .env, protect secrets in .gitignore, install Chromium
+    cellenium init     scaffold .env, protect secrets in .gitignore, install Chromium and Claude Code commands
+    cellenium claude   install the Claude Code commands and skills into .claude/ (or ~/.claude with --global)
     cellenium doctor   verify configuration, Google Sheets access, and the browser
 """
+
 import argparse
 import json
 import subprocess
@@ -16,8 +18,13 @@ from cellenium.settings import Settings
 
 
 ENV_FILE = Path(".env")
+
 GITIGNORE = Path(".gitignore")
+
 SECRETS = (".env", "credentials.json")
+
+CLAUDE_DIRS = ("commands/cellenium", "skills/cellenium")
+
 OPTIONAL_FIELDS = {"OPENAI_API_KEY", "LOGFIRE_TOKEN"}
 
 
@@ -72,6 +79,8 @@ def init(args: argparse.Namespace) -> int:
     print("cellenium init")
     _write_env(args.force)
     _protect_secrets()
+    if not args.skip_claude:
+        _install_claude(Path(".claude"), force=False)
     if not args.skip_browser and not _install_browser(args.with_deps):
         return 1
     print(
@@ -81,6 +90,48 @@ def init(args: argparse.Namespace) -> int:
         "  3. share the spreadsheet with the service account's client_email (Viewer)\n"
         "  4. run `cellenium doctor`"
     )
+    return 0
+
+
+# ------------------------------ #
+#             claude             #
+# ------------------------------ #
+
+def _claude_source() -> Path:
+    """Bundled copy in an installed wheel, or the repository's .claude/ in a source checkout."""
+    bundled = Path(str(files("cellenium").joinpath("claude")))
+    return bundled if bundled.is_dir() else Path(__file__).resolve().parents[2] / ".claude"
+
+
+def _install_claude(target: Path, force: bool) -> bool:
+    source = _claude_source()
+    copied, unchanged, modified = 0, 0, []
+    for folder in CLAUDE_DIRS:
+        for file in sorted((source / folder).rglob("*")):
+            if not file.is_file():
+                continue
+            destination = target / file.relative_to(source)
+            if destination.exists() and destination.read_bytes() == file.read_bytes():
+                unchanged += 1
+                continue
+            if destination.exists() and not force:
+                modified.append(destination)
+                continue
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(file.read_bytes())
+            copied += 1
+    _ok(f"Claude Code commands in {target}: {copied} installed, {unchanged} up to date")
+    if modified:
+        _fail(f"kept {len(modified)} locally modified file(s): {', '.join(map(str, modified))}", "rerun `cellenium claude --force` to replace them")
+    return not modified
+
+
+def claude(args: argparse.Namespace) -> int:
+    print("cellenium claude")
+    target = Path.home() / ".claude" if args.globally else Path(".claude")
+    if not _install_claude(target, args.force):
+        return 1
+    print("\nrestart Claude Code, then run /cellenium:artifact (or any /cellenium:* command)")
     return 0
 
 
@@ -171,7 +222,13 @@ def main(argv: list[str] | None = None) -> int:
     init_parser.add_argument("--force", action="store_true", help="overwrite an existing .env")
     init_parser.add_argument("--skip-browser", action="store_true", help="do not install Chromium")
     init_parser.add_argument("--with-deps", action="store_true", help="also install Chromium's system libraries (Linux/CI)")
+    init_parser.add_argument("--skip-claude", action="store_true", help="do not install the Claude Code commands")
     init_parser.set_defaults(handler=init)
+
+    claude_parser = commands.add_parser("claude", help="install the Claude Code commands and skills")
+    claude_parser.add_argument("--global", dest="globally", action="store_true", help="install into ~/.claude for every project")
+    claude_parser.add_argument("--force", action="store_true", help="replace locally modified files")
+    claude_parser.set_defaults(handler=claude)
 
     doctor_parser = commands.add_parser("doctor", help="verify configuration, sheet access, and the browser")
     doctor_parser.add_argument("--offline", action="store_true", help="skip opening the Google Sheet")
