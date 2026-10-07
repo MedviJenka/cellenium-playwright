@@ -30,4 +30,4 @@ def run_vision_agent(image: list[str], prompt: str) -> VisionSchema:
 
 
 if __name__ == '__main__':
-    print(run_vision_agent(prompt='what is displayed?', image=[r'C:\Users\medvi\PycharmProjects\PythonProject\tests\files\images\img.png']))
+    print(run_vision_agent(prompt='what is displayed?', image=[r'C:\Users\medvi\OneDrive\Desktop\checklist\data\screenshots\img.png']))
