@@ -2,15 +2,13 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
-
 from playwright.sync_api import Locator
+from cellenium.engine.manager import BrowserManager
+from cellenium.functions.locators import get_entry, get_locator
+from cellenium.functions.logger import Logger
 
-from src.core.engine.manager import BrowserManager
-from src.core.functions.locators import get_entry, get_locator
-from src.core.functions.logger import Logger
 
-SCREENSHOTS = Path(__file__).resolve().parent.parent / "data" / "screenshots"
-
+SCREENSHOTS = Path("data") / "screenshots"  # relative to the working directory, not the installed package
 
 log = Logger(name='browser-manager')
 
@@ -22,7 +20,7 @@ class PageEngine(BrowserManager):
 
     def get_web(self, url: str) -> None:
         self.page.goto(url)
-        log.fire(message=f'web opened: {url}')
+        log.fire(message=f'web opened: {url} using: {self.screen} screen')
 
     def get_element(self, name: str, timeout: int = 10_000) -> Locator:
         locator = get_locator(self.page, self.screen, name)

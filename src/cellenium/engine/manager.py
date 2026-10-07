@@ -8,7 +8,7 @@ download step to wire up here.
 from typing import Optional
 from dataclasses import dataclass, field
 from playwright.sync_api import sync_playwright, Browser, BrowserContext, Page, Playwright
-from settings import Config
+from cellenium.settings import get_config
 
 
 @dataclass
@@ -24,7 +24,7 @@ class BrowserManager:
         constructor field here rather than a runtime method.
     """
 
-    headless: bool = Config.TEST_HEADLESS
+    headless: Optional[bool] = None
     browser_name: str = "chromium"
     http_credentials: Optional[dict] = None
     playwright: Playwright = field(init=False, repr=False)
@@ -33,6 +33,8 @@ class BrowserManager:
     page: Page = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
+        if self.headless is None:
+            self.headless = get_config().TEST_HEADLESS
         self.playwright = sync_playwright().start()
         launcher = getattr(self.playwright, self.browser_name)
         self.browser = launcher.launch(headless=self.headless)

@@ -1,9 +1,10 @@
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Literal
 
 import logfire
 
-from settings import Config
+from cellenium.settings import get_config
 
 LogLevel = Literal["info", "error", "debug", "warning", "fatal"]
 
@@ -13,9 +14,11 @@ class Logger:
 
     name: str
 
-    def __post_init__(self) -> None:
-        self.config = logfire.configure(
-            token=Config.LOGFIRE_TOKEN,
+    @cached_property
+    def config(self):
+        # Configured on first log call so module-level loggers don't load settings at import time.
+        return logfire.configure(
+            token=get_config().LOGFIRE_TOKEN,
             send_to_logfire="if-token-present",
         )
 

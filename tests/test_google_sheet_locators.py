@@ -1,18 +1,18 @@
 import importlib
 import sys
 import types
-
 import pytest
 
 
 def _load_sheets(monkeypatch):
-    settings = types.ModuleType("settings")
-    settings.Config = types.SimpleNamespace(
-        GOOGLE_SHEETS="https://docs.google.com/spreadsheets/d/sheet-id/edit"
+    settings = types.ModuleType("cellenium.settings")
+    settings.get_config = lambda: types.SimpleNamespace(
+        GOOGLE_SHEETS="https://docs.google.com/spreadsheets/d/sheet-id/edit",
+        LOGFIRE_TOKEN=None,
     )
-    monkeypatch.setitem(sys.modules, "settings", settings)
-    sys.modules.pop("src.core.functions.sheets", None)
-    return importlib.import_module("src.core.functions.sheets")
+    monkeypatch.setitem(sys.modules, "cellenium.settings", settings)
+    sys.modules.pop("cellenium.functions.sheets", None)
+    return importlib.import_module("cellenium.functions.sheets")
 
 
 def test_fetch_locators_reads_only_the_selected_screen(monkeypatch, tmp_path):
@@ -32,8 +32,8 @@ def test_fetch_locators_reads_only_the_selected_screen(monkeypatch, tmp_path):
             return Worksheet()
 
     class Client:
-        def open_by_key(self, spreadsheet_id):
-            assert spreadsheet_id == "sheet-id"
+        def open_by_url(self, url):
+            assert url == "https://docs.google.com/spreadsheets/d/sheet-id/edit"
             return Spreadsheet()
 
     credentials = tmp_path / "credentials.json"
@@ -60,7 +60,7 @@ def test_fetch_locators_requires_a_screen(monkeypatch, tmp_path):
 
 
 def test_get_entry_reads_the_requested_screen_directly(monkeypatch):
-    sheets = types.ModuleType("src.core.functions.sheets")
+    sheets = types.ModuleType("cellenium.functions.sheets")
     requested_screens = []
 
     def fetch_locators(screen):
@@ -68,9 +68,9 @@ def test_get_entry_reads_the_requested_screen_directly(monkeypatch):
         return {"search": {"type": "NAME", "value": "q", "actions": "", "comments": ""}}
 
     sheets.fetch_locators = fetch_locators
-    monkeypatch.setitem(sys.modules, "src.core.functions.sheets", sheets)
-    sys.modules.pop("src.core.functions.locators", None)
-    locators = importlib.import_module("src.core.functions.locators")
+    monkeypatch.setitem(sys.modules, "cellenium.functions.sheets", sheets)
+    sys.modules.pop("cellenium.functions.locators", None)
+    locators = importlib.import_module("cellenium.functions.locators")
 
     entry = locators.get_entry("Google", "search")
 

@@ -1,7 +1,10 @@
 .env
 .*
 !.claude
-src/core/data/
+!.env.example
+data/
+*.egg-info/
+dist/
 credentials.json
 __pycache__/
 *.pyc

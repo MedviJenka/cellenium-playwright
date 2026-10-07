@@ -1,6 +1,6 @@
 from asyncio import Task
 from crewai import LLM
-from settings import Config
+from cellenium.settings import get_config
 from functools import cached_property
 from crewai.agents.agent_builder.base_agent import BaseAgent
 
@@ -14,4 +14,4 @@ class AgentConfig:
 
     @cached_property
     def llm(self) -> LLM:
-        return LLM(model=Config.OPENAI_MODEL)
+        return LLM(model=get_config().OPENAI_MODEL)

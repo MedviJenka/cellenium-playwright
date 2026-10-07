@@ -1,8 +1,6 @@
-from collections.abc import Generator
-
 import pytest
-
-from src.core.engine.page_engine import PageEngine
+from collections.abc import Generator
+from cellenium.engine.page_engine import PageEngine
 
 
 @pytest.fixture
