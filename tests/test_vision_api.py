@@ -21,7 +21,7 @@ def _load_vision_api(monkeypatch):
         "cellenium.api.vision",
         "cellenium.functions.logger",
         "src.cellenium.api.vision",
-        "src.cellenium.settings",
+        "cellenium.settings",
     ):
         sys.modules.pop(module_name, None)
 

@@ -1,3 +1,4 @@
+from asyncio import to_thread
 from fastapi import FastAPI, APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
@@ -6,12 +7,13 @@ from tempfile import NamedTemporaryFile
 from typing import AsyncGenerator
 from cellenium.ai.agents.vision.crew import run_vision_agent
 from cellenium.functions.logger import Logger
-from src.cellenium.settings import get_config
+from cellenium.settings import get_config
 
 
 log = Logger(name='vision-service')
 
 Config = get_config()
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator:
@@ -31,7 +33,7 @@ async def vision(prompt: str, image: UploadFile = File(...)) -> JSONResponse:
         temp_file.write(await image.read())
 
     try:
-        response = run_vision_agent(prompt=prompt, image=[str(image_path)])
+        response = await to_thread(run_vision_agent, prompt=prompt, image=[str(image_path)])
     finally:
         image_path.unlink(missing_ok=True)
 
@@ -64,4 +66,4 @@ def docs() -> JSONResponse:
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app=app, host='0.0.0.0', port=9876, use_colors=True)
+    uvicorn.run(app=app, host='0.0.0.0', port=8888, use_colors=True)
