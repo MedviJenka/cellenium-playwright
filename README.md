@@ -4,7 +4,7 @@ Cellenium Playwright is an experimental Python browser-automation toolkit built 
 
 The repository also contains **TestFlow**, a set of Claude Code skills that turns product requirements and technical specifications into traceable pytest tests, validated UI locators, execution evidence, and a test-quality verdict.
 
-> **Status:** active development. The browser and locator layers are usable, but the checked-in vision test is still a scaffold and does not currently pass. This repository is not published as a Python package; install it from a source checkout with `uv`.
+> **Status:** active development. The browser and locator layers are usable, but the checked-in vision test is still a scaffold and does not currently pass. Install it from PyPI with `pip install cellenium` (or `uv add cellenium`), then run `playwright install chromium`. Configuration (`.env`, `credentials.json`) is read from your project's working directory.
 
 ## Features
 

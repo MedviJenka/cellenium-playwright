@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
 from playwright.sync_api import Locator
-from src.core.engine.manager import BrowserManager
-from src.core.functions.locators import get_entry, get_locator
-from src.core.functions.logger import Logger
+from cellenium.engine.manager import BrowserManager
+from cellenium.functions.locators import get_entry, get_locator
+from cellenium.functions.logger import Logger
 
 
-SCREENSHOTS = Path(__file__).resolve().parent.parent / "data" / "screenshots"
+SCREENSHOTS = Path("data") / "screenshots"  # relative to the working directory, not the installed package
 
 log = Logger(name='browser-manager')
 

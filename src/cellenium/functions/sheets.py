@@ -18,8 +18,8 @@ Sheet columns (per the QA team's POM sheet):
 import gspread
 from pathlib import Path
 from typing import Optional
-from functions.logger import Logger
-from settings import Config
+from cellenium.functions.logger import Logger
+from cellenium.settings import get_config
 
 
 log = Logger('sheets-logic')
@@ -50,14 +50,16 @@ def _parse_worksheet(worksheet: gspread.Worksheet) -> dict[str, dict[str, str]]:
     return locators
 
 
-def fetch_locators(screen: Optional[str] = None, credentials_path: Path = Config.CREDENTIALS_JSON) -> dict[str, dict]:
+def fetch_locators(screen: Optional[str] = None, credentials_path: Optional[Path] = None) -> dict[str, dict]:
     """Read all locator rows from one worksheet selected by screen name."""
     if not screen:
-        log.fire(message='screen is required to select a Google Sheets worksheet', level='error')
-        raise ValueError
+        message = 'screen is required to select a Google Sheets worksheet'
+        log.fire(message=message, level='error')
+        raise ValueError(message)
 
-    gc = gspread.service_account(filename=str(credentials_path))
-    spreadsheet = gc.open_by_url(Config.GOOGLE_SHEETS)
+    config = get_config()
+    gc = gspread.service_account(filename=str(credentials_path or config.CREDENTIALS_JSON))
+    spreadsheet = gc.open_by_url(config.GOOGLE_SHEETS)
 
     try:
         worksheet = spreadsheet.worksheet(screen)

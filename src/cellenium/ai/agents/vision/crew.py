@@ -1,8 +1,8 @@
 from pathlib import Path
-from ai.config import AgentConfig
+from cellenium.ai.config import AgentConfig
 from crewai import Agent, Crew, Task
-from ai.agents.vision.schemas import VisionSchema
-from ai.agents.vision.tools.vision import VisionTool
+from cellenium.ai.agents.vision.schemas import VisionSchema
+from cellenium.ai.agents.vision.tools.vision import VisionTool
 from crewai.project import CrewBase, agent, crew, task
 
 

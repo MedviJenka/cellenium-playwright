@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 from playwright.sync_api import Locator, Page
 
-from src.core.functions.sheets import fetch_locators
+from cellenium.functions.sheets import fetch_locators
 
 # Selenium's find_element silently returns the first match; Playwright locators are
 # strict-mode by default and raise on multiple matches, so each strategy here resolves

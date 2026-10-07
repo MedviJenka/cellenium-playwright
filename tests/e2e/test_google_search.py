@@ -1,6 +1,6 @@
 import pytest
-from src.core.engine.page_engine import PageEngine
-from src.core.functions.logger import Logger
+from cellenium.engine.page_engine import PageEngine
+from cellenium.functions.logger import Logger
 
 
 log = Logger(name='google sanity')
