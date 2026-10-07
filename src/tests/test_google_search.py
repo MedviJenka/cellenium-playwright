@@ -6,7 +6,6 @@ from src.core.functions.logger import Logger
 log = Logger(name='google sanity')
 
 
-
 class TestGoogleSearch:
 
     @pytest.mark.parametrize('engine', ['Google'], indirect=True)

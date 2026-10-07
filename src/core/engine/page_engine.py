@@ -20,7 +20,7 @@ class PageEngine(BrowserManager):
 
     def get_web(self, url: str) -> None:
         self.page.goto(url)
-        log.fire(message=f'web opened: {url}')
+        log.fire(message=f'web opened: {url} using: {self.screen} screen')
 
     def get_element(self, name: str, timeout: int = 10_000) -> Locator:
         locator = get_locator(self.page, self.screen, name)

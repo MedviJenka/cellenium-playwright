@@ -31,8 +31,8 @@ def test_fetch_locators_reads_only_the_selected_screen(monkeypatch, tmp_path):
             return Worksheet()
 
     class Client:
-        def open_by_key(self, spreadsheet_id):
-            assert spreadsheet_id == "sheet-id"
+        def open_by_url(self, url):
+            assert url == "https://docs.google.com/spreadsheets/d/sheet-id/edit"
             return Spreadsheet()
 
     credentials = tmp_path / "credentials.json"

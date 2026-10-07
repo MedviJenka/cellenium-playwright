@@ -1,4 +1,5 @@
-"""Read Page Object Model locators directly from Google Sheets.
+"""
+Read Page Object Model locators directly from Google Sheets.
 Uses gspread with a service-account credentials.json (no "anyone with the
 link" sharing required) - the sheet just needs to be shared with the service
 account's client_email (see credentials.json) as a Viewer.
@@ -13,31 +14,28 @@ Sheet columns (per the QA team's POM sheet):
     actions - optional
     comments - optional
 """
-import re
-from pathlib import Path
 
 import gspread
-
+from pathlib import Path
+from typing import Optional
+from functions.logger import Logger
 from settings import Config
 
-CREDENTIALS_PATH = Path(__file__).resolve().parent.parent.parent.parent / "credentials.json"
 
-_ID_RE = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
-
-
-def _parse_sheet_id(raw: str) -> str:
-    """Accept either a bare spreadsheet ID or a full edit URL."""
-    id_match = _ID_RE.search(raw)
-    return id_match.group(1) if id_match else raw
+log = Logger('sheets-logic')
 
 
 def _parse_worksheet(worksheet: gspread.Worksheet) -> dict[str, dict[str, str]]:
+
     rows = worksheet.get_all_values()
+
     if not rows:
+        log.fire(message='no rows were found', level='debug')
         return {}
 
     header = [h.strip().lower() for h in rows[0]]
     locators: dict[str, dict[str, str]] = {}
+
     for row in rows[1:]:
         record = dict(zip(header, row))
         name = record.get("name", "").strip()
@@ -52,21 +50,20 @@ def _parse_worksheet(worksheet: gspread.Worksheet) -> dict[str, dict[str, str]]:
     return locators
 
 
-def fetch_locators(
-    screen: str | None,
-    credentials_path: Path = CREDENTIALS_PATH,
-) -> dict[str, dict[str, str]]:
+def fetch_locators(screen: Optional[str] = None, credentials_path: Path = Config.CREDENTIALS_JSON) -> dict[str, dict]:
     """Read all locator rows from one worksheet selected by screen name."""
     if not screen:
-        raise ValueError("screen is required to select a Google Sheets worksheet")
+        log.fire(message='screen is required to select a Google Sheets worksheet', level='error')
+        raise ValueError
 
-    spreadsheet_id = _parse_sheet_id(Config.GOOGLE_SHEETS)
     gc = gspread.service_account(filename=str(credentials_path))
-    spreadsheet = gc.open_by_key(spreadsheet_id)
+    spreadsheet = gc.open_by_url(Config.GOOGLE_SHEETS)
 
     try:
         worksheet = spreadsheet.worksheet(screen)
-    except gspread.WorksheetNotFound as exc:
-        raise KeyError(f"No worksheet named {screen!r} in the configured Google Sheet") from exc
+
+    except gspread.WorksheetNotFound as e:
+        log.fire(f"No worksheet named {screen!r} in the configured Google Sheet", level='error')
+        raise ValueError from e
 
     return _parse_worksheet(worksheet)
