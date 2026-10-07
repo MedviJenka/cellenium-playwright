@@ -10,9 +10,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
     GOOGLE_SHEETS:        str         = Field(...,                       description='')
-    GOOGLE_SHEET_API_KEY: str         = Field(...,                       description='')
-    GOOGLE_SHEET_EMAIL:   str         = Field(...,                       description='')
-    GOOGLE_SHEET_ID:      str         = Field(...,                       description='')
     OPENAI_MODEL:         str         = Field(...,                       description='')
     OPENAI_API_KEY:       str | None  = Field(None,                      description='')
     LOGFIRE_TOKEN:        str | None  = Field(None,                      description='')

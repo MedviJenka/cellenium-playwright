@@ -48,13 +48,20 @@ uv run playwright install --with-deps chromium
 
 ## Configuration
 
-Create `.env` in the repository root. Optional values are labeled below:
+In the project where you use cellenium, run:
+
+```sh
+cellenium init     # writes a .env template, adds .env and credentials.json to .gitignore, installs Chromium
+cellenium doctor   # checks settings, credentials.json, Google Sheet access, and that Chromium launches
+```
+
+`cellenium init --with-deps` also installs Chromium's system libraries (Linux/CI). `cellenium doctor --offline` skips opening the sheet; it exits non-zero when a check fails, so it can gate CI.
+
+Settings are read from `.env` in the working directory or from environment variables:
 
 ```dotenv
-GOOGLE_SHEETS=<spreadsheet-id-or-edit-url>
-GOOGLE_SHEET_API_KEY=<google-api-key>
-GOOGLE_SHEET_EMAIL=<service-account-email>
-GOOGLE_SHEET_ID=<spreadsheet-id>
+GOOGLE_SHEETS=<spreadsheet-edit-url>
+CREDENTIALS_JSON=credentials.json
 OPENAI_MODEL=<model-name>
 OPENAI_API_KEY=<optional-api-key>
 LOGFIRE_TOKEN=<optional-logfire-token>
@@ -63,13 +70,7 @@ TEST_HEADLESS=true
 
 `GOOGLE_SHEETS` selects the locator spreadsheet. When `LOGFIRE_TOKEN` is omitted, logging remains local and no data is sent to Logfire.
 
-Place the Google service-account document at:
-
-```text
-credentials.json
-```
-
-Share the locator spreadsheet with the service account's `client_email` as a viewer. Never commit `.env` or `credentials.json`; both are ignored by Git.
+Save the Google service-account key as `credentials.json` and share the locator spreadsheet with its `client_email` as a viewer (`cellenium doctor` prints the address). Never commit `.env` or `credentials.json`.
 
 ## Google Sheets Page Object Model
 

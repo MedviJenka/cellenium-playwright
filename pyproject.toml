@@ -1,6 +1,6 @@
 [project]
 name = "cellenium"
-version = "0.1.0"
+version = "0.2.0"
 description = "Playwright browser automation with a Google Sheets Page Object Model and CrewAI vision analysis"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -22,6 +22,9 @@ dev = [
     "pytest>=9.1.1",
     "pytest-xdist>=3.8.0",
 ]
+
+[project.scripts]
+cellenium = "cellenium.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/MedviJenka/cellenium-playwright"
