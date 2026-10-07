@@ -2,7 +2,7 @@
 name: executor
 description: Run repository-native pytest commands, preserve exact evidence, and classify collection, environment, test, and product failures.
 argument-hint: <test paths, node IDs, or markers>
-command: /testflow:executor
+command: /cellenium:executor
 ---
 
 Invoke the Skill tool with `skill: "testflow:executor"` before doing anything else. 

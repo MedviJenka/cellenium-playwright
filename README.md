@@ -51,11 +51,14 @@ uv run playwright install --with-deps chromium
 In the project where you use cellenium, run:
 
 ```sh
-cellenium init     # writes a .env template, adds .env and credentials.json to .gitignore, installs Chromium
+cellenium init     # writes a .env template, adds .env and credentials.json to .gitignore, installs Chromium and the Claude Code commands
+cellenium claude   # (re)installs the /cellenium:* Claude Code commands and skills into .claude/
 cellenium doctor   # checks settings, credentials.json, Google Sheet access, and that Chromium launches
 ```
 
 `cellenium init --with-deps` also installs Chromium's system libraries (Linux/CI). `cellenium doctor --offline` skips opening the sheet; it exits non-zero when a check fails, so it can gate CI.
+
+`cellenium claude --global` installs the commands into `~/.claude` so they are available in every project; locally modified files are kept unless you pass `--force`. Restart Claude Code after installing. `cellenium init --skip-claude` skips this step.
 
 Settings are read from `.env` in the working directory or from environment variables:
 

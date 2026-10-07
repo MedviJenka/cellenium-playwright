@@ -2,7 +2,7 @@
 name: prd-reader
 description: Extract testable, traceable pytest requirements from a PRD, feature brief, ticket, or acceptance criteria.
 argument-hint: <PRD path, issue, or requirements>
-command: /testflow:prd-reader
+command: /cellenium:prd-reader
 ---
 
 Invoke the Skill tool with `skill: "testflow:prd-reader"` 

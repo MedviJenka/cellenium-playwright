@@ -2,7 +2,7 @@
 name: evaluator
 description: Evaluate pytest tests against requirements, specifications, implementation contracts, and execution evidence.
 argument-hint: <requirements, tests, and execution results>
-command: /testflow:evaluator
+command: /cellenium:evaluator
 ---
 
 Invoke the Skill tool with `skill: "testflow:evaluator"` 

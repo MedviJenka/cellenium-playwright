@@ -2,7 +2,7 @@
 name: web
 description: Explore a live web application in a real browser to discover and document reproducible potential bugs with evidence.
 argument-hint: <URL, scope, role, and optional PRD/spec>
-command: /testflow:web
+command: /cellenium:web
 ---
 
 Invoke the Skill tool with `skill: "testflow:web"` 
