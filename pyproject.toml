@@ -1,6 +1,6 @@
 [project]
 name = "cellenium"
-version = "0.3.4"
+version = "0.3.3"
 description = "Playwright browser automation with a Google Sheets Page Object Model and CrewAI vision analysis"
 readme = "README.md"
 requires-python = ">=3.13"

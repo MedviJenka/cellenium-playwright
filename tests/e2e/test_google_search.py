@@ -16,4 +16,5 @@ class TestGoogleSearch:
         engine.get_element("button").click()
         sc = engine.get_screenshot()
         response = run_vision_agent(prompt='what is displayed?', image=[sc])
-        print(response)
+        log.fire(f'ai response:\n{response}')
+        assert response['confidence_level'] > 80, log.fire(message=f'test failed, confidence level is {response['confidence_level']}', level='error')
