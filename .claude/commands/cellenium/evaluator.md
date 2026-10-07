@@ -5,6 +5,5 @@ argument-hint: <requirements, tests, and execution results>
 command: /cellenium:evaluator
 ---
 
-Invoke the Skill tool with `skill: "testflow:evaluator"` 
-before doing anything else. Pass `$ARGUMENTS` as the evaluation 
+Before doing anything else, read `.claude/skills/cellenium/evaluator/SKILL.md` (or `~/.claude/skills/cellenium/evaluator/SKILL.md` if it is not in the project) and follow it as your instructions. Pass `$ARGUMENTS` as the evaluation 
 scope and return the coverage matrix, evidence-backed findings, residual risks, and verdict.

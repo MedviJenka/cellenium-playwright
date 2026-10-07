@@ -5,6 +5,5 @@ argument-hint: <page, screen, and required elements>
 command: /cellenium:locator-writer
 ---
 
-Invoke the Skill tool with `skill: "testflow:locator-writer"` 
-before doing anything else. Pass `$ARGUMENTS` as the UI target and element requirements. 
+Before doing anything else, read `.claude/skills/cellenium/locator-writer/SKILL.md` (or `~/.claude/skills/cellenium/locator-writer/SKILL.md` if it is not in the project) and follow it as your instructions. Pass `$ARGUMENTS` as the UI target and element requirements. 
 Preview updates before replacing existing non-empty sheet rows.

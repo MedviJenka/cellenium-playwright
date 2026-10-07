@@ -5,7 +5,6 @@ argument-hint: <URL, scope, role, and optional PRD/spec>
 command: /cellenium:web
 ---
 
-Invoke the Skill tool with `skill: "testflow:web"` 
-before doing anything else. Pass `$ARGUMENTS` as the exploration charter. 
+Before doing anything else, read `.claude/skills/cellenium/web/SKILL.md` (or `~/.claude/skills/cellenium/web/SKILL.md` if it is not in the project) and follow it as your instructions. Pass `$ARGUMENTS` as the exploration charter. 
 Use a real browser, preserve safety boundaries, 
 and return verified findings plus regression-test candidates without modifying application code.
