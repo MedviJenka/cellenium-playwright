@@ -178,6 +178,8 @@ Run Claude Code from the repository and invoke either the complete pipeline or a
 
 The skills are manual-only. The locator writer previews changes before replacing existing Google Sheet selectors and verifies selectors against the live UI.
 
+`/cellenium:plan <feature>` writes an implementation plan as one interactive HTML page in `.plans/` instead of a `plan.md`. The page is a three-level tree (outcome → how it works → where in code) of claims you can disagree with. Each claim has a visual (screen mockup, code snippet, flow, or table), and open questions appear as inline decisions with a recommended option. The text is in Simplified Technical English. Mark claims, answer decisions, click **Respond**, and paste the copied text back into Claude. Claude treats it as feedback, writes the next revision, and implements only after you approve.
+
 The separate checklist skills live under `.claude/skills/checklist/`: `before-startup` (system ready to build tests), `cruising` (everything in place, critical errors and potential bugs), `landing` (final production readiness), and the standalone `fordec` emergency decision skill.
 
 ## Project layout

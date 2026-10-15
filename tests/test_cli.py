@@ -77,6 +77,8 @@ def test_init_installs_claude_commands(project):
 
     assert (project / ".claude/commands/cellenium/artifact.md").is_file()
     assert (project / ".claude/skills/cellenium/artifact/SKILL.md").is_file()
+    assert (project / ".claude/commands/cellenium/plan.md").is_file()
+    assert (project / ".claude/skills/cellenium/plan/template.html").is_file()
 
 
 def test_claude_keeps_modified_files_unless_forced(project):
