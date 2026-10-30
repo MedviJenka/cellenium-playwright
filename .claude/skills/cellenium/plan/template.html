@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan</title>
+<style>
+  :root {
+    --bg: #f7f6f3; --surface: #ffffff; --surface-2: #f0eee9; --border: #dedad2;
+    --text: #1f1d1a; --muted: #6b665e; --accent: #c2541a; --accent-soft: #fbe9df;
+    --ok: #2f7d4f; --ok-soft: #e2f2e8; --bad: #b3261e; --bad-soft: #f9e1df;
+    --code-bg: #1e1c19; --code-text: #ece8e1; --add: #9fe0b0; --del: #f2a39c;
+    --l1: #c2541a; --l2: #3b6ea8; --l3: #6d5a9c;
+    --radius: 10px; --mono: ui-monospace, "Cascadia Code", Consolas, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161513; --surface: #1f1e1b; --surface-2: #2a2825; --border: #3a3733;
+      --text: #ece8e1; --muted: #a29c92; --accent: #e8743b; --accent-soft: #3a2519;
+      --ok: #6cc28f; --ok-soft: #1c3226; --bad: #f08a80; --bad-soft: #3d1f1c;
+      --code-bg: #0f0e0d; --l1: #e8743b; --l2: #6fa0db; --l3: #a593d6;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161513; --surface: #1f1e1b; --surface-2: #2a2825; --border: #3a3733;
+    --text: #ece8e1; --muted: #a29c92; --accent: #e8743b; --accent-soft: #3a2519;
+    --ok: #6cc28f; --ok-soft: #1c3226; --bad: #f08a80; --bad-soft: #3d1f1c;
+    --code-bg: #0f0e0d; --l1: #e8743b; --l2: #6fa0db; --l3: #a593d6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 920px; margin: 0 auto; padding: 24px 16px 120px; }
+  h1 { font-size: 26px; line-height: 1.25; margin: 0 0 6px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .outcome { margin: 18px 0; border-left: 4px solid var(--accent); }
+  .outcome .label, .eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .outcome p { margin: 4px 0 0; font-size: 18px; font-weight: 600; }
+  .changes { margin: 0 0 18px; background: var(--accent-soft); border-color: transparent; }
+  .changes ul { margin: 6px 0 0; padding-left: 20px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 18px; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-right: 1px solid var(--border); border-radius: 0; }
+  .seg button:last-child { border-right: 0; }
+  button { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  button:hover { background: var(--surface-2); }
+  button.active { background: var(--text); color: var(--bg); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; padding: 9px 18px; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; }
+  .lv { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: #fff; white-space: nowrap; }
+  .lv1 { background: var(--l1); } .lv2 { background: var(--l2); } .lv3 { background: var(--l3); }
+
+  .node { margin: 10px 0; }
+  .node > .card { padding: 12px 14px; }
+  .node.lvl1 > .card { border-left: 4px solid var(--l1); }
+  .node.lvl2 > .card { border-left: 4px solid var(--l2); }
+  .node.lvl3 > .card { border-left: 4px solid var(--l3); }
+  .node.verdict-disagree > .card { background: var(--bad-soft); }
+  .node.verdict-agree > .card { background: var(--ok-soft); }
+  .children { margin-left: 22px; padding-left: 12px; border-left: 1px dashed var(--border); }
+  .head { display: flex; gap: 10px; align-items: flex-start; }
+  .twisty { flex: none; width: 26px; height: 26px; padding: 0; border-radius: 6px; font-size: 12px; line-height: 1; }
+  .twisty[disabled] { visibility: hidden; }
+  .claim { flex: 1; min-width: 0; }
+  .claim .text { font-weight: 600; font-size: 16px; }
+  .claim .meta { display: flex; gap: 8px; align-items: center; margin-bottom: 2px; }
+  .nid { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .detail { margin: 6px 0 0; color: var(--muted); }
+  .body { margin-top: 10px; display: grid; gap: 10px; }
+  .collapsed > .children { display: none; }
+
+  .visual { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface-2); }
+  .visual .cap { font-size: 12px; color: var(--muted); padding: 6px 10px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+  .visual pre { margin: 0; padding: 10px 12px; overflow-x: auto; font: 13px/1.45 var(--mono); }
+  .screen .chrome { display: flex; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .screen .chrome i { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+  .screen pre { background: var(--surface); }
+  .code pre { background: var(--code-bg); color: var(--code-text); }
+  .code .add { color: var(--add); } .code .del { color: var(--del); }
+  .tag { font-family: var(--mono); font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--border); }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 12px; }
+  .flow .step { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+  .flow .arrow { color: var(--muted); }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); }
+  .tbl th, .tbl td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .tbl th { background: var(--surface-2); }
+  .tblwrap { overflow-x: auto; }
+
+  .decision { border: 1px solid var(--accent); border-radius: 8px; padding: 12px; background: var(--surface); }
+  .decision .q { font-weight: 600; margin: 2px 0 8px; }
+  .decision.answered { border-color: var(--ok); }
+  .opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; margin: 6px 0; cursor: pointer; }
+  .opt:hover { background: var(--surface-2); }
+  .opt input { margin-top: 4px; }
+  .opt .rec { font-size: 11px; font-weight: 700; color: var(--ok); margin-left: 6px; }
+  .opt .desc { display: block; font-size: 13px; color: var(--muted); }
+  .opt input[type="text"] { width: 100%; margin-top: 4px; }
+  input[type="text"], textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; width: 100%; }
+  textarea { min-height: 64px; resize: vertical; }
+
+  .feedback { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .feedback button { font-size: 13px; padding: 4px 10px; }
+  .feedback button.on-agree { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .feedback button.on-disagree { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .feedback textarea { flex-basis: 100%; }
+
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 10px 16px; }
+  .bar .in { max-width: 920px; margin: 0 auto; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; padding: 16px; }
+  .modal.open { display: flex; }
+  .modal .card { width: min(760px, 100%); max-height: 90vh; display: flex; flex-direction: column; gap: 10px; }
+  .modal textarea { flex: 1; min-height: 320px; font: 13px/1.45 var(--mono); }
+  .row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  .error { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); margin-bottom: 16px; }
+  @media (max-width: 560px) { .children { margin-left: 8px; padding-left: 8px; } h1 { font-size: 22px; } }
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<div class="bar"><div class="in">
+  <span id="progress" class="small muted"></span>
+  <div class="row">
+    <button id="reset" type="button">Clear answers</button>
+    <button id="respond" class="primary" type="button">Respond</button>
+  </div>
+</div></div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="card">
+    <strong id="modal-title">Paste this text into Claude</strong>
+    <span class="small muted">The text is copied to your clipboard. If the copy fails, select the text and copy it manually.</span>
+    <textarea id="out" readonly aria-label="Response text"></textarea>
+    <div class="row">
+      <button id="close" type="button">Close</button>
+      <button id="copy" class="primary" type="button">Copy again</button>
+    </div>
+  </div>
+</div>
+
+<!--
+  PLAN DATA. Claude replaces the line below with the plan JSON (see SKILL.md for the schema).
+  Inside this block, write every "</" as "<\/" so the JSON cannot close the script tag.
+-->
+<script id="plan-data" type="application/json">
+__PLAN_DATA__
+</script>
+
+<script>
+(function () {
+  "use strict";
+
+  var DEMO = {
+    title: "Scheduled messages (demo plan)",
+    request: "Let users schedule chat messages.",
+    outcome: "A user can write a message now and the app sends it at a time that the user selects.",
+    revision: 1,
+    nodes: [
+      {
+        id: "1", claim: "A user can schedule a maximum of 50 messages at the same time.",
+        detail: "The app rejects message 51 and shows an error.",
+        visual: { kind: "mockup", caption: "Composer with the schedule menu", text: "+--------------------------------------+\n| Type a message...         [Send v]   |\n|                           | Send now |\n|                           | Schedule |\n+--------------------------------------+" },
+        decisions: [{ id: "D1", question: "What is the maximum number of scheduled messages for each user?", options: [
+          { label: "50", description: "Low storage cost. Most users schedule fewer than 10.", recommended: true },
+          { label: "100", description: "Supports power users. Doubles the worst-case queue size." },
+          { label: "No limit", description: "Simple for users. Abuse risk." }
+        ] }],
+        children: [
+          { id: "1.1", claim: "The worker sends each message within 60 seconds of its scheduled time.",
+            visual: { kind: "flow", steps: ["Composer", "POST /schedule", "scheduled_messages table", "Worker (every 30 s)", "Chat service"] },
+            children: [
+              { id: "1.1.1", claim: "A new table stores the scheduled messages.",
+                visual: { kind: "code", file: "db/migrations/0042_scheduled_messages.sql", change: "add", lang: "sql",
+                  snippet: "+CREATE TABLE scheduled_messages (\n+  id BIGSERIAL PRIMARY KEY,\n+  user_id BIGINT NOT NULL,\n+  send_at TIMESTAMPTZ NOT NULL\n+);" } }
+            ] }
+        ]
+      }
+    ]
+  };
+
+  var LEVEL = { 1: "Outcome", 2: "How it works", 3: "Where in code" };
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k];
+      if (v == null || v === false) return;
+      if (k === "text") n.textContent = v;
+      else if (k === "class") n.className = v;
+      else if (k.slice(0, 2) === "on") n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v === true ? "" : v);
+    });
+    (kids || []).forEach(function (c) { if (c != null) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+
+  function loadPlan() {
+    var raw = document.getElementById("plan-data").textContent.trim();
+    if (!raw || raw === "__PLAN_DATA__") return { plan: DEMO, error: null };
+    try { return { plan: JSON.parse(raw), error: null }; }
+    catch (e) { return { plan: DEMO, error: "The plan JSON is not valid: " + e.message + ". The page shows the demo plan." }; }
+  }
+
+  var loaded = loadPlan();
+  var plan = loaded.plan;
+  var nodesById = {}, decisions = [], order = [];
+  (function index(list, depth, parent) {
+    (list || []).forEach(function (n) {
+      n._depth = Math.min(depth, 3); n._parent = parent;
+      nodesById[n.id] = n; order.push(n);
+      (n.decisions || []).forEach(function (d) { d._node = n; decisions.push(d); });
+      index(n.children, depth + 1, n);
+    });
+  })(plan.nodes, 1, null);
+
+  // ---------- state (per-viewer convenience only; the Respond text is the real hand-off) ----------
+  var KEY = "plan-state:" + (plan.title || "") + ":" + (plan.revision || 1);
+  var state = { verdict: {}, comment: {}, answer: {}, other: {}, general: "" };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) state = Object.assign(state, saved); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} updateProgress(); }
+
+  // ---------- visuals ----------
+  function renderVisual(v) {
+    if (!v || !v.kind) return null;
+    var cap = v.caption ? el("span", { text: v.caption }) : null;
+    if (v.kind === "mockup") {
+      return el("div", { class: "visual screen" }, [
+        el("div", { class: "chrome", "aria-hidden": "true" }, [el("i"), el("i"), el("i")]),
+        cap ? el("div", { class: "cap" }, [cap]) : null,
+        el("pre", { text: v.text || "" })
+      ]);
+    }
+    if (v.kind === "code") {
+      var pre = el("pre");
+      String(v.snippet || "").split("\n").forEach(function (line, i, all) {
+        var cls = line[0] === "+" ? "add" : line[0] === "-" ? "del" : null;
+        pre.appendChild(el("span", { class: cls, text: line + (i < all.length - 1 ? "\n" : "") }));
+      });
+      return el("div", { class: "visual code" }, [
+        el("div", { class: "cap" }, [
+          el("span", { text: (v.file || "") + (v.lines ? ":" + v.lines : "") }),
+          el("span", {}, [v.change ? el("span", { class: "tag", text: v.change }) : null, v.caption ? " " + v.caption : null])
+        ]),
+        pre
+      ]);
+    }
+    if (v.kind === "flow") {
+      var flow = el("div", { class: "flow" });
+      (v.steps || []).forEach(function (s, i) {
+        if (i) flow.appendChild(el("span", { class: "arrow", "aria-hidden": "true", text: "→" }));
+        flow.appendChild(el("span", { class: "step", text: s }));
+      });
+      return el("div", { class: "visual" }, [cap ? el("div", { class: "cap" }, [cap]) : null, flow]);
+    }
+    if (v.kind === "table") {
+      var t = el("table", { class: "tbl" }, [
+        el("thead", {}, [el("tr", {}, (v.columns || []).map(function (c) { return el("th", { text: c }); }))]),
+        el("tbody", {}, (v.rows || []).map(function (r) { return el("tr", {}, r.map(function (c) { return el("td", { text: String(c) }); })); }))
+      ]);
+      return el("div", { class: "visual" }, [cap ? el("div", { class: "cap" }, [cap]) : null, el("div", { class: "tblwrap" }, [t])]);
+    }
+    return el("div", { class: "visual" }, [el("pre", { text: v.text || JSON.stringify(v, null, 2) })]);
+  }
+
+  // ---------- decisions ----------
+  function renderDecision(d) {
+    var box = el("div", { class: "decision", id: "dec-" + d.id });
+    var name = "d-" + d.id;
+    var type = d.multi ? "checkbox" : "radio";
+    function current() { var a = state.answer[d.id]; return d.multi ? (a || []) : a; }
+    function refresh() { box.classList.toggle("answered", isAnswered(d)); }
+    function pick(label, checked) {
+      if (d.multi) {
+        var a = current().filter(function (x) { return x !== label; });
+        if (checked) a.push(label);
+        state.answer[d.id] = a;
+      } else state.answer[d.id] = label;
+      refresh(); save();
+    }
+    box.appendChild(el("div", { class: "eyebrow", text: "Decision " + d.id + (d.multi ? " · select one or more" : "") }));
+    box.appendChild(el("div", { class: "q", text: d.question }));
+    var opts = (d.options || []).concat([{ label: "Other", _other: true }]);
+    opts.forEach(function (o) {
+      var a = current();
+      var checked = d.multi ? a.indexOf(o.label) >= 0 : a === o.label;
+      var input = el("input", { type: type, name: name, checked: checked, onchange: function (e) { pick(o.label, e.target.checked); } });
+      var kids = [el("strong", { text: o.label }), o.recommended ? el("span", { class: "rec", text: "Recommended" }) : null];
+      if (o.description) kids.push(el("span", { class: "desc", text: o.description }));
+      if (o._other) kids.push(el("input", { type: "text", placeholder: "Write your answer", value: state.other[d.id] || "",
+        "aria-label": "Other answer for " + d.id,
+        oninput: function (e) { state.other[d.id] = e.target.value; if (e.target.value && !input.checked) { input.checked = true; pick("Other", true); } else save(); } }));
+      box.appendChild(el("label", { class: "opt" }, [input, el("span", { style: "flex:1;min-width:0" }, kids)]));
+    });
+    refresh();
+    return box;
+  }
+  function isAnswered(d) {
+    var a = state.answer[d.id];
+    if (d.multi ? !(a && a.length) : !a) return false;
+    var hasOther = d.multi ? a.indexOf("Other") >= 0 : a === "Other";
+    return !hasOther || !!(state.other[d.id] || "").trim();
+  }
+
+  // ---------- nodes ----------
+  var nodeEls = {};
+  function renderNode(n) {
+    var hasKids = !!(n.children && n.children.length);
+    var wrap = el("div", { class: "node lvl" + n._depth, id: "node-" + n.id });
+    var twisty = el("button", { class: "twisty", type: "button", disabled: !hasKids, "aria-label": "Show or hide details of " + n.id,
+      onclick: function () { setOpen(n.id, wrap.classList.contains("collapsed")); } });
+    var comment = el("textarea", { placeholder: "What is wrong, or what do you want instead?", "aria-label": "Comment on " + n.id });
+    comment.value = state.comment[n.id] || "";
+    comment.addEventListener("input", function () { state.comment[n.id] = comment.value; save(); });
+    var agree = el("button", { type: "button", text: "✓ Agree" });
+    var disagree = el("button", { type: "button", text: "✗ Disagree" });
+    var note = el("button", { type: "button", text: "Comment" });
+    function paint() {
+      var v = state.verdict[n.id];
+      agree.className = v === "agree" ? "on-agree" : "";
+      disagree.className = v === "disagree" ? "on-disagree" : "";
+      wrap.classList.toggle("verdict-agree", v === "agree");
+      wrap.classList.toggle("verdict-disagree", v === "disagree");
+      comment.style.display = (v === "disagree" || comment.value || comment._show) ? "" : "none";
+    }
+    function setVerdict(v) { state.verdict[n.id] = state.verdict[n.id] === v ? null : v; save(); paint(); if (v === "disagree") comment.focus(); }
+    agree.addEventListener("click", function () { setVerdict("agree"); });
+    disagree.addEventListener("click", function () { setVerdict("disagree"); });
+    note.addEventListener("click", function () { comment._show = true; paint(); comment.focus(); });
+
+    var body = el("div", { class: "body" }, [renderVisual(n.visual)]
+      .concat((n.decisions || []).map(renderDecision))
+      .concat([el("div", { class: "feedback" }, [agree, disagree, note, comment])]));
+
+    wrap.appendChild(el("div", { class: "card" }, [
+      el("div", { class: "head" }, [twisty, el("div", { class: "claim" }, [
+        el("div", { class: "meta" }, [el("span", { class: "nid", text: n.id }), el("span", { class: "lv lv" + n._depth, text: LEVEL[n._depth] })]),
+        el("div", { class: "text", text: n.claim }),
+        n.detail ? el("p", { class: "detail", text: n.detail }) : null
+      ])]),
+      body
+    ]));
+    if (hasKids) wrap.appendChild(el("div", { class: "children" }, n.children.map(renderNode)));
+    nodeEls[n.id] = { wrap: wrap, twisty: twisty, hasKids: hasKids };
+    paint();
+    return wrap;
+  }
+  function setOpen(id, open) {
+    var e = nodeEls[id]; if (!e || !e.hasKids) return;
+    e.wrap.classList.toggle("collapsed", !open);
+    e.twisty.textContent = open ? "▾" : "▸";
+    e.twisty.setAttribute("aria-expanded", String(open));
+  }
+  function setDepth(depth) {
+    order.forEach(function (n) { setOpen(n.id, n._depth < depth); });
+    document.querySelectorAll("[data-depth]").forEach(function (b) { b.classList.toggle("active", +b.dataset.depth === depth); });
+  }
+
+  // ---------- page ----------
+  var app = document.getElementById("app");
+  document.title = plan.title || "Plan";
+  if (loaded.error) app.appendChild(el("div", { class: "card error", text: loaded.error }));
+  app.appendChild(el("div", { class: "eyebrow", text: "Plan · revision " + (plan.revision || 1) }));
+  app.appendChild(el("h1", { text: plan.title || "Plan" }));
+  if (plan.request) app.appendChild(el("div", { class: "muted", text: "Request: " + plan.request }));
+  app.appendChild(el("div", { class: "card outcome" }, [el("div", { class: "label", text: "Result after this plan" }), el("p", { text: plan.outcome || "" })]));
+  if (plan.changes && plan.changes.length) {
+    app.appendChild(el("div", { class: "card changes" }, [el("div", { class: "eyebrow", text: "Changes since the previous revision" }),
+      el("ul", {}, plan.changes.map(function (c) { return el("li", { text: c }); }))]));
+  }
+  app.appendChild(el("div", { class: "toolbar" }, [
+    el("span", { class: "small muted", text: "Show:" }),
+    el("div", { class: "seg" }, [1, 2, 3].map(function (d) {
+      return el("button", { type: "button", "data-depth": d, text: ["Outcomes", "+ How", "+ Code"][d - 1], onclick: function () { setDepth(d); } });
+    })),
+    el("span", { class: "legend small muted" }, [el("span", { class: "lv lv1", text: LEVEL[1] }), el("span", { class: "lv lv2", text: LEVEL[2] }), el("span", { class: "lv lv3", text: LEVEL[3] })])
+  ]));
+  (plan.nodes || []).forEach(function (n) { app.appendChild(renderNode(n)); });
+
+  var general = el("textarea", { placeholder: "Anything else? Missing parts, priorities, constraints.", "aria-label": "General comment" });
+  general.value = state.general || "";
+  general.addEventListener("input", function () { state.general = general.value; save(); });
+  app.appendChild(el("div", { class: "card", style: "margin-top:18px" }, [el("div", { class: "eyebrow", text: "General comment" }), general]));
+  setDepth(1);
+
+  // ---------- respond ----------
+  function quote(s) { return '"' + String(s).replace(/\s+/g, " ").trim() + '"'; }
+  function buildResponse() {
+    var out = [];
+    out.push("PLAN RESPONSE");
+    out.push("Plan: " + (plan.title || "") + " (revision " + (plan.revision || 1) + ")");
+    if (plan.file) out.push("File: " + plan.file);
+    out.push("This is feedback on the plan. It is not approval to implement.");
+    out.push("");
+    out.push("## Decisions");
+    var open = [];
+    decisions.forEach(function (d) {
+      if (!isAnswered(d)) { open.push(d); return; }
+      var a = state.answer[d.id]; var picked = d.multi ? a : [a];
+      var rec = (d.options || []).filter(function (o) { return o.recommended; }).map(function (o) { return o.label; });
+      var text = picked.map(function (p) { return p === "Other" ? "Other: " + quote(state.other[d.id]) : quote(p); }).join(", ");
+      var tag = picked.length === rec.length && picked.every(function (p) { return rec.indexOf(p) >= 0; }) ? " (recommended)" : rec.length ? " (not the recommendation)" : "";
+      out.push("- " + d.id + " [node " + d._node.id + "] " + d.question + " -> " + text + tag);
+    });
+    if (!decisions.length) out.push("- (the plan has no decisions)");
+    if (open.length) { out.push(""); out.push("## Unanswered decisions"); open.forEach(function (d) { out.push("- " + d.id + " [node " + d._node.id + "] " + d.question); }); }
+
+    var dis = order.filter(function (n) { return state.verdict[n.id] === "disagree"; });
+    var com = order.filter(function (n) { return state.verdict[n.id] !== "disagree" && (state.comment[n.id] || "").trim(); });
+    var agr = order.filter(function (n) { return state.verdict[n.id] === "agree"; });
+    out.push(""); out.push("## Disagreements");
+    if (!dis.length) out.push("- none");
+    dis.forEach(function (n) { out.push("- " + n.id + " " + quote(n.claim) + (state.comment[n.id] ? "\n  Reason: " + quote(state.comment[n.id]) : "\n  Reason: (none given)")); });
+    if (com.length) { out.push(""); out.push("## Comments"); com.forEach(function (n) { out.push("- " + n.id + " " + quote(n.claim) + "\n  Comment: " + quote(state.comment[n.id])); }); }
+    out.push(""); out.push("## Agreed");
+    out.push(agr.length ? "- " + agr.map(function (n) { return n.id; }).join(", ") : "- none marked");
+    var silent = order.length - dis.length - agr.length - com.length;
+    if (silent > 0) out.push("- " + silent + " node(s) have no feedback");
+    if ((state.general || "").trim()) { out.push(""); out.push("## General comment"); out.push(state.general.trim()); }
+    return out.join("\n");
+  }
+  function copy(text) {
+    var ta = document.getElementById("out");
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).catch(function () { ta.select(); document.execCommand("copy"); });
+    ta.select(); try { document.execCommand("copy"); } catch (e) {}
+    return Promise.resolve();
+  }
+  var modal = document.getElementById("modal");
+  document.getElementById("respond").addEventListener("click", function () {
+    var t = buildResponse(); var ta = document.getElementById("out");
+    ta.value = t; modal.classList.add("open"); copy(t);
+  });
+  document.getElementById("copy").addEventListener("click", function () { copy(document.getElementById("out").value); });
+  document.getElementById("close").addEventListener("click", function () { modal.classList.remove("open"); });
+  modal.addEventListener("click", function (e) { if (e.target === modal) modal.classList.remove("open"); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") modal.classList.remove("open"); });
+  document.getElementById("reset").addEventListener("click", function () {
+    if (!confirm("Clear all answers and comments on this page?")) return;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    location.reload();
+  });
+
+  function updateProgress() {
+    var answered = decisions.filter(isAnswered).length;
+    var touched = order.filter(function (n) { return state.verdict[n.id] || (state.comment[n.id] || "").trim(); }).length;
+    document.getElementById("progress").textContent = "Decisions " + answered + "/" + decisions.length + " · feedback on " + touched + "/" + order.length + " nodes";
+  }
+  updateProgress();
+})();
+</script>
+</body>
+</html>

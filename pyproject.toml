@@ -1,20 +1,20 @@
 [project]
 name = "cellenium"
-version = "0.3.3"
+version = "0.3.5"
 description = "Playwright browser automation with a Google Sheets Page Object Model and CrewAI vision analysis"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "crewai>=1.15.23",
-    "fastapi>=0.142.2",
-    "gspread>=6.2.1",
-    "importlib-metadata>=8.0.0",
-    "logfire>=5.1.1",
-    "oauth2client>=4.1.3",
-    "pillow>=12.3.0",
-    "playwright>=1.63.0",
-    "pydantic-settings>=2.15.0",
-    "uvicorn>=0.54.0",
+    "crewai",
+    "fastapi",
+    "gspread",
+    "importlib-metadata",
+    "logfire",
+    "oauth2client",
+    "pillow",
+    "playwright",
+    "pydantic-settings",
+    "uvicorn",
 ]
 
 [dependency-groups]
